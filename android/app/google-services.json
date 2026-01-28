@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "848089007094",
+    "project_id": "cryptography-visualizer",
+    "storage_bucket": "cryptography-visualizer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848089007094:android:9b7024caaca9c6f090fdd7",
+        "android_client_info": {
+          "package_name": "com.example.cryptography_visualizer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMZGuuaFsYaTTSm9EPhrqyion4SJjgT3c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
