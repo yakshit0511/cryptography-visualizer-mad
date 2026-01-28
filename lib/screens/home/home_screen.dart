@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../config/constants.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -13,22 +14,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final responsivePadding = AppResponsivePadding(mediaQuery);
+    final isMobile = mediaQuery.isMobile;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.deepPurple,
-        title: const Text(
-          'CRYPTOGRAPHY VISUALIZER',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+        backgroundColor: AppColors.primary,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Logo
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: isMobile ? 36 : 40,
+                height: isMobile ? 36 : 40,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // Title Text
+            Text(
+              'CRYPTOGRAPHY VISUALIZER',
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
-          // Settings Icon
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 24),
             onPressed: () {
@@ -36,7 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             tooltip: 'Settings',
           ),
-          // Profile Icon
           IconButton(
             icon: const Icon(Icons.person_outline, size: 24),
             onPressed: () {
@@ -46,61 +67,70 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Header
-              _buildWelcomeSection(),
-              const SizedBox(height: 32),
-
-              // Quick Stats Section
-              _buildStatsSection(),
-              const SizedBox(height: 32),
-
-              // Cipher Solutions Section
-              Text(
-                'Cipher Solutions',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
+          padding: responsivePadding.horizontalPadding,
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Padding(
+              padding: responsivePadding.horizontalPadding.copyWith(
+                top: isMobile ? AppSpacing.xl : AppSpacing.xxl,
+                bottom: AppSpacing.xxl,
               ),
-              const SizedBox(height: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Section
+                  _buildWelcomeSection(),
+                  SizedBox(height: isMobile ? AppSpacing.xxl : AppSpacing.xxxl),
 
-              // Caesar Cipher Card
-              _buildCipherCard(
-                context,
-                title: 'Caesar Cipher',
-                description: 'Encrypt and decrypt text using circular shift substitution',
-                icon: Icons.rotate_right_outlined,
-                color: Colors.deepPurple,
-                onTap: () {
-                  Navigator.pushNamed(context, '/caesar');
-                },
+                  // Quick Stats Section
+                  _buildStatsSection(),
+                  SizedBox(height: isMobile ? AppSpacing.xxl : AppSpacing.xxxl),
+
+                  // Cipher Solutions Header
+                  Text(
+                    'Cipher Solutions',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          fontSize: isMobile ? 18 : 20,
+                        ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Caesar Cipher Card
+                  _buildCipherCard(
+                    context,
+                    title: 'Caesar Cipher',
+                    description: 'Encrypt and decrypt text using circular shift substitution',
+                    icon: Icons.rotate_right_outlined,
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/caesar');
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Playfair Cipher Card
+                  _buildCipherCard(
+                    context,
+                    title: 'Playfair Cipher',
+                    description: 'Solve digraph encryption with visual 5×5 matrix grid',
+                    icon: Icons.grid_3x3_outlined,
+                    color: AppColors.secondary,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/playfair');
+                    },
+                  ),
+                  SizedBox(height: isMobile ? AppSpacing.xl : AppSpacing.xxl),
+
+                  // Features Section
+                  _buildFeaturesSection(context),
+                  SizedBox(height: isMobile ? AppSpacing.xl : AppSpacing.xxl),
+                ],
               ),
-              const SizedBox(height: 16),
-
-              // Playfair Cipher Card
-              _buildCipherCard(
-                context,
-                title: 'Playfair Cipher',
-                description: 'Solve digraph encryption with visual 5x5 matrix grid',
-                icon: Icons.grid_3x3_outlined,
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.pushNamed(context, '/playfair');
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Features Section
-              _buildFeaturesSection(context),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -109,21 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWelcomeSection() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.deepPurple, Colors.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.deepPurple.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        gradient: AppGradients.primaryGradient,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: AppShadows.elevatedShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,22 +154,21 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Welcome back!',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.white.withOpacity(0.8),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ],
               ),
@@ -157,24 +176,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: const Icon(
                   Icons.person,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 28,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Visualize and solve cryptographic ciphers in real-time',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Visualize and learn cryptographic ciphers in real-time',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.white.withOpacity(0.8),
+                  fontSize: 14,
+                ),
           ),
         ],
       ),
@@ -191,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.check_circle_outline,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _buildStatCard(
             label: 'Available Tools',
@@ -199,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.category_outlined,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _buildStatCard(
             label: 'Visualizations',
@@ -217,44 +236,39 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.deepPurple.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.1),
+          width: 1.5,
+        ),
+        boxShadow: AppShadows.cardShadow,
       ),
       child: Column(
         children: [
           Icon(
             icon,
-            color: Colors.deepPurple,
+            color: AppColors.primary,
             size: 24,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
-            ),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ],
       ),
@@ -272,11 +286,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.1),
@@ -296,25 +313,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[900],
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                          height: 1.4,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.grey,
+                              height: 1.4,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.lg),
                 Container(
                   width: 60,
                   height: 60,
@@ -324,18 +340,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 28,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Solve Button
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               height: 40,
@@ -344,7 +359,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.md,
                   ),
                 ),
                 child: Row(
@@ -353,16 +371,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Icon(
                       Icons.open_in_new,
                       size: 16,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.md),
                     Text(
                       'Open Solver',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontSize: 14,
+                          ),
                     ),
                   ],
                 ),
@@ -376,11 +392,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFeaturesSection(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        color: AppColors.secondaryLight,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.secondary.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,27 +408,27 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(
                 Icons.stars_outlined,
-                color: Colors.blue[700],
+                color: AppColors.secondary,
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 'Key Features',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildFeatureItem('📝 Real-time text encryption and decryption'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg),
+          _buildFeatureItem('📝 Real-time text encryption & decryption'),
+          const SizedBox(height: AppSpacing.md),
           _buildFeatureItem('🎨 Visual representation of cipher grids'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           _buildFeatureItem('🔄 Step-by-step transformation display'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           _buildFeatureItem('⚡ Instant results with clear output'),
         ],
       ),
@@ -419,11 +438,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeatureItem(String text) {
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 13,
-        color: Colors.grey[700],
-        height: 1.5,
-      ),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.greyDark,
+            height: 1.5,
+          ),
     );
   }
 }
