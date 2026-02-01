@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/constants.dart';
 import '../../services/auth_service.dart';
+import '../../services/user_stats_service.dart';
+import '../../models/user_stats.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,19 +14,28 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String userName = "";
-  int ciphersSolved = 0;
   final AuthService _authService = AuthService();
+  final UserStatsService _statsService = UserStatsService();
+  UserStats? _userStats;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadUserStats();
   }
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userName = prefs.getString('userName') ?? 'User';
+    });
+  }
+
+  Future<void> _loadUserStats() async {
+    final stats = await _statsService.getUserStats();
+    setState(() {
+      _userStats = stats;
     });
   }
 
@@ -79,6 +90,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: isMobile ? 36 : 40,
                 height: isMobile ? 36 : 40,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: isMobile ? 36 : 40,
+                    height: isMobile ? 36 : 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -95,6 +121,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history, size: 24),
+            onPressed: () {
+              Navigator.pushNamed(context, '/history');
+            },
+            tooltip: 'History',
+          ),
           IconButton(
             icon: const Icon(Icons.logout_outlined, size: 24),
             onPressed: _handleLogout,
@@ -248,24 +281,27 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _buildStatCard(
             label: 'Ciphers Solved',
-            value: ciphersSolved.toString(),
+            value: (_userStats?.totalCiphersSolved ?? 0).toString(),
             icon: Icons.check_circle_outline,
+            color: AppColors.success,
           ),
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _buildStatCard(
-            label: 'Available Tools',
-            value: '2',
-            icon: Icons.category_outlined,
+            label: 'Caesar',
+            value: (_userStats?.caesarCount ?? 0).toString(),
+            icon: Icons.rotate_right_outlined,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _buildStatCard(
-            label: 'Visualizations',
-            value: '∞',
-            icon: Icons.visibility_outlined,
+            label: 'Playfair',
+            value: (_userStats?.playfairCount ?? 0).toString(),
+            icon: Icons.grid_3x3_outlined,
+            color: AppColors.secondary,
           ),
         ),
       ],
@@ -276,6 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required String value,
     required IconData icon,
+    required Color color,
   }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -283,24 +320,31 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.1),
+          color: color.withOpacity(0.2),
           width: 1.5,
         ),
         boxShadow: AppShadows.cardShadow,
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 24,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: color,
                 ),
           ),
           const SizedBox(height: AppSpacing.xs),

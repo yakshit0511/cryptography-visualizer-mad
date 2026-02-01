@@ -127,6 +127,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       width: isMobile ? 120 : 140,
                       height: isMobile ? 120 : 140,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: isMobile ? 120 : 140,
+                          height: isMobile ? 120 : 140,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                          ),
+                          child: const Icon(
+                            Icons.lock_outline,
+                            color: AppColors.white,
+                            size: 60,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

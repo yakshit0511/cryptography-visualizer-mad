@@ -107,6 +107,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: responsivePadding.logoSize,
                         height: responsivePadding.logoSize,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: responsivePadding.logoSize,
+                            height: responsivePadding.logoSize,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                            ),
+                            child: const Icon(
+                              Icons.lock_outline,
+                              color: AppColors.white,
+                              size: 60,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
