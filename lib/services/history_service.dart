@@ -11,14 +11,26 @@ class HistoryService {
   
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final List<HistoryItem> _history = [];
+  String? _cachedUserId;
   
-  String get _storageKey => 'cipher_history_${_auth.currentUser?.uid ?? "guest"}';
+  String get _storageKey {
+    // Cache the user ID to persist across logout
+    if (_cachedUserId == null || _cachedUserId!.isEmpty) {
+      _cachedUserId = _auth.currentUser?.uid ?? 'guest';
+    }
+    return 'cipher_history_$_cachedUserId';
+  }
   
   List<HistoryItem> get history => List.unmodifiable(_history);
   
   /// Load history from SharedPreferences (per user)
   Future<void> loadHistory() async {
     try {
+      // Update cached user ID if available
+      if (_auth.currentUser?.uid != null) {
+        _cachedUserId = _auth.currentUser!.uid;
+      }
+      
       final prefs = await SharedPreferences.getInstance();
       final String? historyJson = prefs.getString(_storageKey);
       

@@ -267,18 +267,19 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildOperationSelector(),
-                  const SizedBox(height: AppSpacing.xl),
                   _buildInputSection(),
                   const SizedBox(height: AppSpacing.xl),
                   _buildKeyInputSection(),
                   const SizedBox(height: AppSpacing.xl),
+                  _buildOperationSelector(),
+                  const SizedBox(height: AppSpacing.xl),
                   _buildProcessButton(),
                   if (_showResult) ...[
                     const SizedBox(height: AppSpacing.xxl),
-                    _buildOutputSection(),
-                    const SizedBox(height: AppSpacing.xl),
+
                     _buildTransformationSteps(),
+                    const SizedBox(height: AppSpacing.xl),
+                    _buildOutputSection(),
                   ],
                   if (_showAddToHistory) ...[
                     const SizedBox(height: AppSpacing.xl),
@@ -673,7 +674,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
               Icon(Icons.timeline, color: AppColors.primary, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                'Transformation Steps',
+                'Step-by-Step Transformation',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -684,78 +685,91 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
           ),
           const SizedBox(height: AppSpacing.lg),
           Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.lg,
+            alignment: WrapAlignment.center,
             children: _transformationSteps.asMap().entries.map((entry) {
               int index = entry.key;
               var step = entry.value;
+              // Generate unique color for each character
+              Color charColor = _getCharacterColor(index);
               return TweenAnimationBuilder<double>(
                 key: ValueKey(index),
                 tween: Tween(begin: 0.0, end: 1.0),
-                duration: Duration(milliseconds: 300 + (index * 50)),
+                duration: Duration(milliseconds: 400 + (index * 100)),
                 curve: Curves.easeOutBack,
                 builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary.withOpacity(0.8),
-                            AppColors.secondary.withOpacity(0.8),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                step['original'],
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
+                          // Original character box
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: charColor,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: charColor.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
                                 ),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              const Icon(
-                                Icons.arrow_forward,
+                              ],
+                            ),
+                            child: Text(
+                              step['original'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                                 color: AppColors.white,
-                                size: 16,
                               ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                step['transformed'],
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            step['explanation'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.white.withOpacity(0.9),
+                          // Black arrow with animation
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: Duration(milliseconds: 500 + (index * 100)),
+                              curve: Curves.easeInOut,
+                              builder: (context, arrowValue, child) {
+                                return Transform.scale(
+                                  scale: arrowValue,
+                                  child: const Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: Colors.black,
+                                    size: 28,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          // Transformed character box
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: charColor.withOpacity(0.8),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: charColor, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: charColor.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              step['transformed'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -795,5 +809,27 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
         ),
       ),
     );
+  }
+  
+  // Get unique color for each character in Caesar cipher
+  Color _getCharacterColor(int index) {
+    final colors = [
+      Colors.deepPurple.shade600,
+      Colors.blue.shade600,
+      Colors.teal.shade600,
+      Colors.green.shade600,
+      Colors.orange.shade600,
+      Colors.pink.shade600,
+      Colors.indigo.shade600,
+      Colors.red.shade600,
+      Colors.amber.shade700,
+      Colors.cyan.shade600,
+      Colors.lime.shade700,
+      Colors.purple.shade600,
+      Colors.deepOrange.shade600,
+      Colors.blueGrey.shade600,
+      Colors.brown.shade600,
+    ];
+    return colors[index % colors.length];
   }
 }

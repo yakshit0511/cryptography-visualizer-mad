@@ -121,12 +121,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history, size: 24),
-            onPressed: () {
-              Navigator.pushNamed(context, '/history');
-            },
-            tooltip: 'History',
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.history_rounded, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/cipher_history');
+              },
+              tooltip: 'View History',
+              color: AppColors.white,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout_outlined, size: 24),

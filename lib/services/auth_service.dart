@@ -67,6 +67,7 @@ class AuthService {
       await prefs.setString('userEmail', email);
       await prefs.setString('userName', fullName);
       await prefs.setString('userId', userCredential.user?.uid ?? '');
+      await prefs.setString('lastLoggedInUserId', userCredential.user?.uid ?? '');
 
       return {
         'success': true,
@@ -127,6 +128,7 @@ class AuthService {
       await prefs.setString('userEmail', email);
       await prefs.setString('userName', userCredential.user?.displayName ?? '');
       await prefs.setString('userId', userCredential.user?.uid ?? '');
+      await prefs.setString('lastLoggedInUserId', userCredential.user?.uid ?? '');
 
       return {
         'success': true,

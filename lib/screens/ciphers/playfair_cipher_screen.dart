@@ -20,7 +20,7 @@ class PlayfairCipherScreen extends StatefulWidget {
 class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     with TickerProviderStateMixin {
   final TextEditingController _inputController = TextEditingController();
-  final TextEditingController _keyController = TextEditingController(text: 'KEY');
+  final TextEditingController _keyController = TextEditingController();
   final HistoryService _historyService = HistoryService();
   final FirestoreService _firestoreService = FirestoreService();
   final UserStatsService _statsService = UserStatsService();
@@ -201,32 +201,35 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     // Animate each step slowly
     for (int i = 0; i < _detailedSteps.length; i++) {
       var step = _detailedSteps[i];
-      Color stepColor = _getStepColor(i);
+      Color stepColor1 = _getStepColor(i * 2);     // First letter color
+      Color stepColor2 = _getStepColor(i * 2 + 1); // Second letter color
       String inputDigraph = step['inputDigraph'];
       String outputDigraph = step['outputDigraph'];
       
-      // Set colors for all 4 letters (2 input + 2 output) with same color
+      // Set DIFFERENT colors for each letter in the digraph
       setState(() {
         _currentStepIndex = i;
         _highlightedCells = Set<String>.from(step['highlightCells']);
         _letterColors = {
-          inputDigraph[0]: stepColor,
-          inputDigraph[1]: stepColor,
-          outputDigraph[0]: stepColor,
-          outputDigraph[1]: stepColor,
+          inputDigraph[0]: stepColor1,   // First input letter
+          inputDigraph[1]: stepColor2,   // Second input letter
+          outputDigraph[0]: stepColor1,  // First output letter (same color as first input)
+          outputDigraph[1]: stepColor2,  // Second output letter (same color as second input)
         };
         
-        // Create arrow animations for each letter pair
+        // Create arrow animations for each letter pair with BLACK arrows
         _arrowAnimations = [
           {
             'from': inputDigraph[0],
             'to': outputDigraph[0],
-            'color': stepColor,
+            'color': Colors.black, // BLACK arrow for first letter
+            'cellColor': stepColor1, // Keep cell color for highlighting
           },
           {
             'from': inputDigraph[1],
             'to': outputDigraph[1],
-            'color': stepColor,
+            'color': Colors.black, // BLACK arrow for second letter
+            'cellColor': stepColor2, // Keep cell color for highlighting
           },
         ];
       });
@@ -1085,7 +1088,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     return colors[stepIndex % colors.length];
   }
   
-  Widget _buildArrowOverlay(String fromLetter, String toLetter, Color color) {
+  Widget _buildArrowOverlay(String fromLetter, String toLetter, Color arrowColor) {
     // Find positions of from and to letters in matrix
     Map<String, int>? fromPos;
     Map<String, int>? toPos;
@@ -1126,7 +1129,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
             fromY: fromY,
             toX: toX,
             toY: toY,
-            color: color,
+            color: arrowColor, // Use the black arrow color
             progress: _arrowAnimation.value,
           ),
         );
