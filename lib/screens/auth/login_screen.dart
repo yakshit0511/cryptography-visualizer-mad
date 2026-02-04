@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/constants.dart';
-import '../../services/auth_service.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +13,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -31,8 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // Call Firebase authentication
-    final result = await _authService.loginUser(
+    // Use AuthProvider for state management
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );

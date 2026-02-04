@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'config/theme.dart';
 import 'screens/auth/login_screen.dart';
@@ -11,7 +12,10 @@ import 'screens/history/cipher_history_local_screen.dart';
 import 'screens/history/firestore_history_screen.dart';
 import 'screens/ciphers/caesar_cipher_screen.dart';
 import 'screens/ciphers/playfair_cipher_screen.dart';
+import 'screens/settings/settings_screen.dart';
 import 'services/history_service.dart';
+import 'providers/auth_provider.dart';
+import 'providers/cipher_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,10 +58,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Cryptography Visualizer',
-      theme: AppTheme.lightTheme,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CipherProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Cryptography Visualizer',
+        theme: AppTheme.lightTheme,
       home: FutureBuilder<bool>(
         future: _isUserLoggedIn,
         builder: (context, snapshot) {
@@ -76,17 +85,19 @@ class _MyAppState extends State<MyApp> {
           return const LoginScreen();
         },
       ),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/history': (context) => const CipherHistoryScreen(),
-        '/cipher_history': (context) => const CipherHistoryLocalScreen(),
-        '/firestore_history': (context) => const FirestoreHistoryScreen(),
-        '/profile': (context) => const HomeScreen(), // Placeholder
-        '/caesar': (context) => const CaesarCipherScreen(),
-        '/playfair': (context) => const PlayfairCipherScreen(),
-      },
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/signup': (context) => const SignupScreen(),
+          '/home': (context) => const HomeScreen(),
+          '/history': (context) => const CipherHistoryScreen(),
+          '/cipher_history': (context) => const CipherHistoryLocalScreen(),
+          '/firestore_history': (context) => const FirestoreHistoryScreen(),
+          '/profile': (context) => const SettingsScreen(), // Placeholder - will create later
+          '/settings': (context) => const SettingsScreen(),
+          '/caesar': (context) => const CaesarCipherScreen(),
+          '/playfair': (context) => const PlayfairCipherScreen(),
+        },
+      ),
     );
   }
 }

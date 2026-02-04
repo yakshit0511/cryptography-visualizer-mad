@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../../config/constants.dart';
 import '../../logic/caesar_logic.dart';
 import '../../models/history_item.dart';
 import '../../models/firestore_history_item.dart';
 import '../../services/history_service.dart';
-import '../../services/firestore_service.dart';
 import '../../services/user_stats_service.dart';
+import '../../providers/cipher_provider.dart';
 
 class CaesarCipherScreen extends StatefulWidget {
   const CaesarCipherScreen({super.key});
@@ -21,7 +22,6 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _keyController = TextEditingController(text: '3');
   final HistoryService _historyService = HistoryService();
-  final FirestoreService _firestoreService = FirestoreService();
   final UserStatsService _statsService = UserStatsService();
   
   int _shiftValue = 3;
@@ -190,7 +190,9 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       steps: stepDescriptions,
     );
     
-    final success = await _firestoreService.addHistory(firestoreItem);
+    // Use CipherProvider for automatic UI updates
+    final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
+    final success = await cipherProvider.addCipher(firestoreItem);
     
     setState(() => _showAddToHistory = true);
     

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/constants.dart';
-import '../../services/auth_service.dart';
+import '../../providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -14,7 +15,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -45,8 +45,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    // Call Firebase registration
-    final result = await _authService.registerUser(
+    // Use AuthProvider for state management
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.register(
       fullName: _fullNameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../../config/constants.dart';
-import '../../services/auth_service.dart';
-import '../../services/user_stats_service.dart';
-import '../../models/user_stats.dart';
+import '../../providers/cipher_provider.dart';
+import '../../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,15 +14,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String userName = "";
-  final AuthService _authService = AuthService();
-  final UserStatsService _statsService = UserStatsService();
-  UserStats? _userStats;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-    _loadUserStats();
+    
+    // Listen to cipher provider for automatic updates
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
+      cipherProvider.loadCipherHistory();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh cipher history when returning to home screen
+    final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
+    cipherProvider.loadCipherHistory();
   }
 
   Future<void> _loadUserData() async {
@@ -30,41 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       userName = prefs.getString('userName') ?? 'User';
     });
-  }
-
-  Future<void> _loadUserStats() async {
-    final stats = await _statsService.getUserStats();
-    setState(() {
-      _userStats = stats;
-    });
-  }
-
-  Future<void> _handleLogout() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                final result = await _authService.logoutUser();
-                if (result['success'] && mounted) {
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
-              },
-              child: const Text('Logout', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -75,11 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.primary,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Logo
@@ -87,13 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: Image.asset(
                 'assets/images/app_logo.png',
-                width: isMobile ? 36 : 40,
-                height: isMobile ? 36 : 40,
+                width: 32,
+                height: 32,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: isMobile ? 36 : 40,
-                    height: isMobile ? 36 : 40,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: AppColors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -101,54 +76,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Icon(
                       Icons.lock_outline,
                       color: AppColors.white,
-                      size: 20,
+                      size: 18,
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
-            // Title Text
-            Text(
-              'CRYPTOGRAPHY VISUALIZER',
-              style: TextStyle(
-                fontSize: isMobile ? 14 : 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
+            const SizedBox(width: AppSpacing.sm),
+            // Title Text - Shortened
+            Flexible(
+              child: Text(
+                'CRYPTO VIZ',
+                style: TextStyle(
+                  fontSize: isMobile ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
         centerTitle: true,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.history_rounded, size: 26),
-              onPressed: () {
-                Navigator.pushNamed(context, '/cipher_history');
-              },
-              tooltip: 'View History',
-              color: AppColors.white,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined, size: 24),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, size: 24),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            tooltip: 'Profile',
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -284,35 +233,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatsSection() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard(
-            label: 'Ciphers Solved',
-            value: (_userStats?.totalCiphersSolved ?? 0).toString(),
-            icon: Icons.check_circle_outline,
-            color: AppColors.success,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _buildStatCard(
-            label: 'Caesar',
-            value: (_userStats?.caesarCount ?? 0).toString(),
-            icon: Icons.rotate_right_outlined,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _buildStatCard(
-            label: 'Playfair',
-            value: (_userStats?.playfairCount ?? 0).toString(),
-            icon: Icons.grid_3x3_outlined,
-            color: AppColors.secondary,
-          ),
-        ),
-      ],
+    return Consumer<CipherProvider>(
+      builder: (context, cipherProvider, child) {
+        return Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: 'Ciphers Solved',
+                value: cipherProvider.totalCount.toString(),
+                icon: Icons.check_circle_outline,
+                color: AppColors.success,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Caesar',
+                value: cipherProvider.caesarCount.toString(),
+                icon: Icons.rotate_right_outlined,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Playfair',
+                value: cipherProvider.playfairCount.toString(),
+                icon: Icons.grid_3x3_outlined,
+                color: AppColors.secondary,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

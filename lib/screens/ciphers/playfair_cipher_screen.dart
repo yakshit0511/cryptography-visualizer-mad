@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import '../../config/constants.dart';
@@ -7,8 +8,8 @@ import '../../logic/playfair_logic.dart';
 import '../../models/history_item.dart';
 import '../../models/firestore_history_item.dart';
 import '../../services/history_service.dart';
-import '../../services/firestore_service.dart';
 import '../../services/user_stats_service.dart';
+import '../../providers/cipher_provider.dart';
 
 class PlayfairCipherScreen extends StatefulWidget {
   const PlayfairCipherScreen({super.key});
@@ -22,7 +23,6 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _keyController = TextEditingController();
   final HistoryService _historyService = HistoryService();
-  final FirestoreService _firestoreService = FirestoreService();
   final UserStatsService _statsService = UserStatsService();
   
   List<List<String>> _matrix = [];
@@ -297,7 +297,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       steps: stepDescriptions,
     );
     
-    final success = await _firestoreService.addHistory(firestoreItem);
+    // Use CipherProvider for automatic UI updates
+    final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
+    final success = await cipherProvider.addCipher(firestoreItem);
     
     setState(() => _showAddToHistory = true);
     
