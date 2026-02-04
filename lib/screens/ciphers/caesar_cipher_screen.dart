@@ -137,23 +137,20 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       _showResult = true;
     });
     
-    // Show transformations sequentially with color animations
-    for (int i = 0; i < _transformationSteps.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 150));
-      if (mounted) {
-        setState(() {});
-      }
-    }
+    // Allow UI to settle before starting animations
+    await Future.delayed(const Duration(milliseconds: 100));
     
     // Increment user stats
     await _statsService.incrementCipherCount('Caesar');
     
     // Show "Add to History" button after animation completes
-    await Future.delayed(const Duration(milliseconds: 300));
-    setState(() {
-      _isProcessing = false;
-      _showAddToHistory = true;
-    });
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        _isProcessing = false;
+        _showAddToHistory = true;
+      });
+    }
   }
   
   Future<void> _addToHistory() async {

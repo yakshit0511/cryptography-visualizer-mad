@@ -19,12 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    
-    // Listen to cipher provider for automatic updates
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
-      cipherProvider.loadCipherHistory();
-    });
   }
 
   @override
@@ -86,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Title Text - Shortened
             Flexible(
               child: Text(
-                'CRYPTO VIZ',
+                'CRYPTOGRAPHY VISUALIZER',
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
                   fontWeight: FontWeight.bold,
@@ -235,33 +229,72 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStatsSection() {
     return Consumer<CipherProvider>(
       builder: (context, cipherProvider, child) {
-        return Row(
+        return Column(
           children: [
-            Expanded(
-              child: _buildStatCard(
-                label: 'Ciphers Solved',
-                value: cipherProvider.totalCount.toString(),
-                icon: Icons.check_circle_outline,
-                color: AppColors.success,
+            // Debug info
+            if (cipherProvider.isLoading)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Text('Loading history...', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
               ),
+            if (cipherProvider.error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: Text(
+                  'Error: ${cipherProvider.error}',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    label: 'Ciphers Solved',
+                    value: cipherProvider.totalCount.toString(),
+                    icon: Icons.check_circle_outline,
+                    color: AppColors.success,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildStatCard(
+                    label: 'Caesar',
+                    value: cipherProvider.caesarCount.toString(),
+                    icon: Icons.rotate_right_outlined,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildStatCard(
+                    label: 'Playfair',
+                    value: cipherProvider.playfairCount.toString(),
+                    icon: Icons.grid_3x3_outlined,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _buildStatCard(
-                label: 'Caesar',
-                value: cipherProvider.caesarCount.toString(),
-                icon: Icons.rotate_right_outlined,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _buildStatCard(
-                label: 'Playfair',
-                value: cipherProvider.playfairCount.toString(),
-                icon: Icons.grid_3x3_outlined,
-                color: AppColors.secondary,
-              ),
+            // Manual refresh button for debugging
+            SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: () {
+                print('🔄 Manual refresh requested');
+                cipherProvider.loadCipherHistory();
+              },
+              icon: Icon(Icons.refresh, size: 16),
+              label: Text('Refresh Stats', style: TextStyle(fontSize: 12)),
             ),
           ],
         );

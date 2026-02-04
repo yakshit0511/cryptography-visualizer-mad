@@ -577,6 +577,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
             const SizedBox(height: AppSpacing.lg),
             if (_matrix.isNotEmpty) ...[
               Stack(
+                alignment: Alignment.center,
                 children: [
                   GridView.builder(
                     shrinkWrap: true,
@@ -588,84 +589,90 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                     ),
                     itemCount: 25,
                     itemBuilder: (context, index) {
-                  int row = index ~/ 5;
-                  int col = index % 5;
-                  String letter = _matrix[row][col];
-                  String displayLetter = letter == 'I' ? 'I/J' : letter;
-                  bool isHighlighted = _highlightedCells.contains(letter);
-                  Color? cellColor = _letterColors[letter];
+                      int row = index ~/ 5;
+                      int col = index % 5;
+                      String letter = _matrix[row][col];
+                      String displayLetter = letter == 'I' ? 'I/J' : letter;
+                      bool isHighlighted = _highlightedCells.contains(letter);
+                      Color? cellColor = _letterColors[letter];
                   
-                  return TweenAnimationBuilder<double>(
-                    key: ValueKey('$row-$col-${_matrix[row][col]}'),
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    duration: Duration(milliseconds: 100 + (index * 40)),
-                    curve: Curves.elasticOut,
-                    builder: (context, value, child) {
-                      return Transform.scale(
-                        scale: value,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 600),
-                          decoration: BoxDecoration(
-                            gradient: isHighlighted && cellColor != null
-                                ? LinearGradient(
-                                    colors: [
-                                      cellColor,
-                                      cellColor.withOpacity(0.7),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : LinearGradient(
-                                    colors: [
-                                      AppColors.secondary.withOpacity(0.7),
-                                      AppColors.primary.withOpacity(0.7),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('$row-$col-${_matrix[row][col]}'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 100 + (index * 40)),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 600),
+                              decoration: BoxDecoration(
+                                gradient: isHighlighted && cellColor != null
+                                    ? LinearGradient(
+                                        colors: [
+                                          cellColor,
+                                          cellColor.withOpacity(0.7),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : LinearGradient(
+                                        colors: [
+                                          AppColors.secondary.withOpacity(0.7),
+                                          AppColors.primary.withOpacity(0.7),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                boxShadow: isHighlighted && cellColor != null
+                                    ? [
+                                        BoxShadow(
+                                          color: cellColor.withOpacity(0.5),
+                                          blurRadius: 12,
+                                          spreadRadius: 2,
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: AppColors.secondary.withOpacity(0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  displayLetter,
+                                  style: TextStyle(
+                                    fontSize: isHighlighted ? 20 : 16,
+                                    fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                                    color: AppColors.white,
+                                    letterSpacing: letter == 'I' ? 0 : 1,
                                   ),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            boxShadow: isHighlighted && cellColor != null
-                                ? [
-                                    BoxShadow(
-                                      color: cellColor.withOpacity(0.5),
-                                      blurRadius: 12,
-                                      spreadRadius: 2,
-                                    ),
-                                  ]
-                                : [
-                                    BoxShadow(
-                                      color: AppColors.secondary.withOpacity(0.3),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              displayLetter,
-                              style: TextStyle(
-                                fontSize: isHighlighted ? 20 : 16,
-                                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
-                                color: AppColors.white,
-                                letterSpacing: letter == 'I' ? 0 : 1,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       );
-                    },
-                  );
                     },
                   ),
-                  // Arrow overlays
+                  // Arrow overlays - Positioned on top of grid
                   if (_arrowAnimations.isNotEmpty)
-                    ..._arrowAnimations.map((arrowData) {
-                      return _buildArrowOverlay(
-                        arrowData['from'],
-                        arrowData['to'],
-                        arrowData['color'],
-                      );
-                    }).toList(),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Stack(
+                          children: _arrowAnimations.map((arrowData) {
+                            return _buildArrowOverlay(
+                              arrowData['from'],
+                              arrowData['to'],
+                              arrowData['color'],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ] else ...[
@@ -1110,30 +1117,38 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       return const SizedBox.shrink();
     }
     
-    // Calculate cell size and spacing
-    const double cellSize = 50.0; // Approximate size based on grid
-    const double spacing = 8.0;
-    const double totalCellSize = cellSize + spacing;
-    
-    // Calculate center positions
-    double fromX = (fromPos['col']! * totalCellSize) + (cellSize / 2);
-    double fromY = (fromPos['row']! * totalCellSize) + (cellSize / 2);
-    double toX = (toPos['col']! * totalCellSize) + (cellSize / 2);
-    double toY = (toPos['row']! * totalCellSize) + (cellSize / 2);
-    
-    return AnimatedBuilder(
-      animation: _arrowAnimation,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size(totalCellSize * 5, totalCellSize * 5),
-          painter: ArrowPainter(
-            fromX: fromX,
-            fromY: fromY,
-            toX: toX,
-            toY: toY,
-            color: arrowColor, // Use the black arrow color
-            progress: _arrowAnimation.value,
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate actual cell dimensions based on available space
+        const int gridCount = 5;
+        const double spacing = 8.0;
+        
+        // Calculate total available space and cell size
+        final double totalSpacing = spacing * (gridCount - 1);
+        final double availableWidth = constraints.maxWidth;
+        final double cellSize = (availableWidth - totalSpacing) / gridCount;
+        
+        // Calculate center positions for each cell
+        double fromX = (fromPos!['col']! * (cellSize + spacing)) + (cellSize / 2);
+        double fromY = (fromPos['row']! * (cellSize + spacing)) + (cellSize / 2);
+        double toX = (toPos!['col']! * (cellSize + spacing)) + (cellSize / 2);
+        double toY = (toPos['row']! * (cellSize + spacing)) + (cellSize / 2);
+        
+        return AnimatedBuilder(
+          animation: _arrowAnimation,
+          builder: (context, child) {
+            return CustomPaint(
+              size: Size(availableWidth, availableWidth), // Square grid
+              painter: ArrowPainter(
+                fromX: fromX,
+                fromY: fromY,
+                toX: toX,
+                toY: toY,
+                color: arrowColor,
+                progress: _arrowAnimation.value,
+              ),
+            );
+          },
         );
       },
     );
@@ -1194,11 +1209,25 @@ class ArrowPainter extends CustomPainter {
     
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 4.0
+      ..strokeWidth = 5.0 // Increased from 4.0 for better visibility
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     
-    // Draw the arrow line
+    // Draw the arrow line with a slight shadow for visibility
+    final shadowPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..strokeWidth = 7.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    
+    // Draw shadow first
+    canvas.drawLine(
+      Offset(fromX, fromY),
+      Offset(currentX, currentY),
+      shadowPaint,
+    );
+    
+    // Draw the main arrow line
     canvas.drawLine(
       Offset(fromX, fromY),
       Offset(currentX, currentY),
@@ -1214,7 +1243,7 @@ class ArrowPainter extends CustomPainter {
       // Calculate arrowhead angle
       double angle = math.atan2(toY - fromY, toX - fromX);
       
-      const double arrowSize = 10.0;
+      const double arrowSize = 12.0; // Increased from 10.0 for better visibility
       const double arrowAngle = math.pi / 6; // 30 degrees
       
       final arrowPath = Path();
