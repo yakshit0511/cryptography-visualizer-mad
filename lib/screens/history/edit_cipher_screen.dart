@@ -66,10 +66,8 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
     final responsivePadding = AppResponsivePadding(mediaQuery);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Edit Cipher History'),
-        backgroundColor: AppColors.primary,
         elevation: 0,
       ),
       body: SafeArea(
@@ -123,7 +121,6 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.category),
                     filled: true,
-                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -162,7 +159,6 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
                     hintText: 'Enter text to encrypt/decrypt',
                     prefixIcon: const Icon(Icons.input),
                     filled: true,
-                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -191,7 +187,6 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
                     hintText: 'Enter encryption key',
                     prefixIcon: const Icon(Icons.vpn_key),
                     filled: true,
-                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -213,7 +208,6 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
                     hintText: 'Enter encrypted/decrypted result',
                     prefixIcon: const Icon(Icons.output),
                     filled: true,
-                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),

@@ -365,10 +365,8 @@ class _CipherHistoryLocalScreenState extends State<CipherHistoryLocalScreen>
     final history = _historyService.history;
     
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Cipher History'),
-        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           if (history.isNotEmpty)

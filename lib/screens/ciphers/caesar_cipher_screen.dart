@@ -229,7 +229,6 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -246,7 +245,6 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
             const Text('Caesar Cipher'),
           ],
         ),
-        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           IconButton(
@@ -394,7 +392,6 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
                 borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
               filled: true,
-              fillColor: AppColors.background,
             ),
           ),
         ],
@@ -499,7 +496,6 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
                   borderSide: BorderSide(color: AppColors.secondary, width: 2),
                 ),
                 filled: true,
-                fillColor: AppColors.background,
               ),
               onChanged: (value) {
                 if (value.isEmpty) {

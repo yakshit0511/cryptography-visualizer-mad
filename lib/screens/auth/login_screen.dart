@@ -80,7 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final isMobile = mediaQuery.isMobile;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),

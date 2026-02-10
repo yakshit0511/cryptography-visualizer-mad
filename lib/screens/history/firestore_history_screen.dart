@@ -354,7 +354,6 @@ class _FirestoreHistoryScreenState extends State<FirestoreHistoryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -371,7 +370,6 @@ class _FirestoreHistoryScreenState extends State<FirestoreHistoryScreen>
             const Text('Cloud History'),
           ],
         ),
-        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           IconButton(

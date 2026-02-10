@@ -361,8 +361,105 @@ class AppTheme {
       brightness: Brightness.dark,
       primary: AppColors.primary,
       secondary: AppColors.secondary,
-      surface: const Color(0xFF121212),
+      surface: const Color(0xFF1E1E1E),
+      error: AppColors.error,
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),
+    cardColor: const Color(0xFF1E1E1E),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1E1E1E),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppColors.primary,
+      foregroundColor: AppColors.white,
+      elevation: 0,
+    ),
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: Color(0xFF1E1E1E),
+    ),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFE0E0E0),
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFE0E0E0),
+      ),
+      displaySmall: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFE0E0E0),
+      ),
+      headlineLarge: TextStyle(
+        fontSize: 26,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFE0E0E0),
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFE0E0E0),
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFE0E0E0),
+      ),
+      titleLarge: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFE0E0E0),
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFE0E0E0),
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFB0B0B0),
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFFE0E0E0),
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: Color(0xFFE0E0E0),
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: Color(0xFFB0B0B0),
+      ),
+      labelLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFE0E0E0),
+      ),
+      labelMedium: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFE0E0E0),
+      ),
+      labelSmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFB0B0B0),
+      ),
+    ),
+    iconTheme: const IconThemeData(
+      color: Color(0xFFE0E0E0),
+    ),
   );
 }

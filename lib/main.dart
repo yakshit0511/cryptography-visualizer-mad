@@ -16,6 +16,7 @@ import 'screens/settings/settings_screen.dart';
 import 'services/history_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cipher_provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,12 +63,17 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CipherProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Cryptography Visualizer',
-        theme: AppTheme.lightTheme,
-      home: FutureBuilder<bool>(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Cryptography Visualizer',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: FutureBuilder<bool>(
         future: _isUserLoggedIn,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -97,7 +103,10 @@ class _MyAppState extends State<MyApp> {
           '/caesar': (context) => const CaesarCipherScreen(),
           '/playfair': (context) => const PlayfairCipherScreen(),
         },
+          );
+        },
       ),
     );
   }
 }
+

@@ -339,7 +339,6 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -356,7 +355,6 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
             const Text('Playfair Cipher'),
           ],
         ),
-        backgroundColor: AppColors.secondary,
         elevation: 0,
         actions: [
           IconButton(
@@ -516,7 +514,6 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                 borderSide: BorderSide(color: AppColors.secondary, width: 2),
               ),
               filled: true,
-              fillColor: AppColors.background,
             ),
             onChanged: (_) => _generateMatrix(),
             inputFormatters: [
@@ -734,7 +731,6 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                 borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
               filled: true,
-              fillColor: AppColors.background,
             ),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),

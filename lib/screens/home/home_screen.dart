@@ -43,11 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final isMobile = mediaQuery.isMobile;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.primary,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -311,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: color.withOpacity(0.2),
@@ -346,8 +344,10 @@ class _HomeScreenState extends State<HomeScreen> {
             label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.grey,
                   fontWeight: FontWeight.w500,
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? const Color(0xFFB0B0B0) 
+                      : Colors.black87,
                 ),
           ),
         ],
@@ -368,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: color.withOpacity(0.2),
@@ -395,14 +395,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         title,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? const Color(0xFFE0E0E0) 
+                                  : Colors.black,
                             ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         description,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.grey,
                               height: 1.4,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? const Color(0xFFB0B0B0) 
+                                  : Colors.black87,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -424,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Icon(
                     icon,
-                    color: AppColors.white,
+                    color: Colors.white,
                     size: 28,
                   ),
                 ),
@@ -451,13 +456,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Icon(
                       Icons.open_in_new,
                       size: 16,
-                      color: AppColors.white,
+                      color: Colors.white,
                     ),
                     const SizedBox(width: AppSpacing.md),
-                    Text(
+                    const Text(
                       'Open Solver',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      style: TextStyle(
                             fontSize: 14,
+                            color: Colors.white,
                           ),
                     ),
                   ],

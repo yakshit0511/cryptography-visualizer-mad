@@ -148,10 +148,8 @@ class _CipherHistoryScreenState extends State<CipherHistoryScreen> {
     final responsivePadding = AppResponsivePadding(mediaQuery);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.primary,
         title: const Text('Cipher History'),
         centerTitle: true,
       ),
