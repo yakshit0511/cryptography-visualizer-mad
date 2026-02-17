@@ -117,7 +117,7 @@ class _EditCipherScreenState extends State<EditCipherScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
-                  value: _selectedCipherType,
+                  initialValue: _selectedCipherType,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.category),
                     filled: true,

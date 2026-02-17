@@ -55,7 +55,7 @@ class CaesarLogic {
       'transformed': transformed,
       'isLetter': true,
       'shift': actualShift,
-      'explanation': '${char} → ${transformed} (shift ${actualShift > 0 ? '+' : ''}${actualShift})',
+      'explanation': '$char → $transformed (shift ${actualShift > 0 ? '+' : ''}$actualShift)',
     };
   }
   

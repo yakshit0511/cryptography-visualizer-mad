@@ -100,10 +100,8 @@ class _CipherHistoryScreenState extends State<CipherHistoryScreen> {
               const SizedBox(height: AppSpacing.md),
               _buildDetailRow(
                 'Created:',
-                cipher.createdAt != null
-                    ? DateFormat('MMM dd, yyyy hh:mm a')
-                        .format(cipher.createdAt.toDate())
-                    : 'N/A',
+                DateFormat('MMM dd, yyyy hh:mm a')
+                        .format(cipher.createdAt.toDate()),
               ),
             ],
           ),
@@ -400,10 +398,8 @@ class _CipherHistoryScreenState extends State<CipherHistoryScreen> {
                       const Icon(Icons.access_time, size: 14, color: AppColors.grey),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        cipher.createdAt != null
-                            ? DateFormat('MMM dd, hh:mm a')
-                                .format(cipher.createdAt.toDate())
-                            : 'N/A',
+                        DateFormat('MMM dd, hh:mm a')
+                                .format(cipher.createdAt.toDate()),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.grey,
                             ),

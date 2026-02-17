@@ -430,7 +430,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
               Switch(
                 value: _useSlider,
                 onChanged: (value) => setState(() => _useSlider = value),
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),
