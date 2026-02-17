@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../../config/constants.dart';
 import '../../providers/cipher_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +29,13 @@ class _HomeScreenState extends State<HomeScreen> {
     // Refresh cipher history when returning to home screen
     final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
     cipherProvider.loadCipherHistory();
+    
+    // Refresh auth data when returning to home screen
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.refreshUserData();
+    
+    // Reload user name from SharedPreferences
+    _loadUserData();
   }
 
   Future<void> _loadUserData() async {
@@ -196,18 +205,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: AppColors.white,
-                  size: 28,
-                ),
+              // Profile Photo
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  return Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: authProvider.profilePhotoPath.isNotEmpty
+                          ? Image.file(
+                              File(authProvider.profilePhotoPath),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.person,
+                                  color: AppColors.white,
+                                  size: 28,
+                                );
+                              },
+                            )
+                          : const Icon(
+                              Icons.person,
+                              color: AppColors.white,
+                              size: 28,
+                            ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

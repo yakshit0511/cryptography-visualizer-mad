@@ -12,6 +12,7 @@ import 'screens/history/cipher_history_local_screen.dart';
 import 'screens/history/firestore_history_screen.dart';
 import 'screens/ciphers/caesar_cipher_screen.dart';
 import 'screens/ciphers/playfair_cipher_screen.dart';
+import 'screens/profile/profile_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'services/history_service.dart';
 import 'providers/auth_provider.dart';
@@ -98,7 +99,7 @@ class _MyAppState extends State<MyApp> {
           '/history': (context) => const CipherHistoryScreen(),
           '/cipher_history': (context) => const CipherHistoryLocalScreen(),
           '/firestore_history': (context) => const FirestoreHistoryScreen(),
-          '/profile': (context) => const SettingsScreen(), // Placeholder - will create later
+          '/profile': (context) => const ProfileScreen(),
           '/settings': (context) => const SettingsScreen(),
           '/caesar': (context) => const CaesarCipherScreen(),
           '/playfair': (context) => const PlayfairCipherScreen(),

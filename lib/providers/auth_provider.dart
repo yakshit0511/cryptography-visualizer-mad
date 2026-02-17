@@ -9,6 +9,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoggedIn = false;
   String _userName = '';
   String _userEmail = '';
+  String _profilePhotoPath = '';
   bool _isLoading = true;
 
   // Getters
@@ -16,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _isLoggedIn;
   String get userName => _userName;
   String get userEmail => _userEmail;
+  String get profilePhotoPath => _profilePhotoPath;
   bool get isLoading => _isLoading;
 
   AuthProvider() {
@@ -33,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       _userName = prefs.getString('userName') ?? '';
       _userEmail = prefs.getString('userEmail') ?? '';
+      _profilePhotoPath = prefs.getString('profilePhotoPath') ?? '';
     } catch (e) {
       debugPrint('Error initializing auth: $e');
     }
@@ -111,11 +114,36 @@ class AuthProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _userName = prefs.getString('userName') ?? '';
       _userEmail = prefs.getString('userEmail') ?? '';
+      _profilePhotoPath = prefs.getString('profilePhotoPath') ?? '';
       _currentUser = _authService.currentUser;
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       notifyListeners();
     } catch (e) {
       debugPrint('Error refreshing user data: $e');
+    }
+  }
+
+  /// Update user name
+  Future<void> updateUserName(String name) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', name);
+      _userName = name;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating user name: $e');
+    }
+  }
+
+  /// Update profile photo path
+  Future<void> updateProfilePhoto(String photoPath) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profilePhotoPath', photoPath);
+      _profilePhotoPath = photoPath;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating profile photo: $e');
     }
   }
 
