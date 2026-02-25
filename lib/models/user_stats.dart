@@ -3,6 +3,7 @@ class UserStats {
   final int totalCiphersSolved;
   final int caesarCount;
   final int playfairCount;
+  final int hillCount;
   final DateTime lastActivity;
   final Map<String, dynamic> dailyStats;
 
@@ -11,6 +12,7 @@ class UserStats {
     required this.totalCiphersSolved,
     required this.caesarCount,
     required this.playfairCount,
+    required this.hillCount,
     required this.lastActivity,
     required this.dailyStats,
   });
@@ -21,7 +23,10 @@ class UserStats {
       totalCiphersSolved: map['totalCiphersSolved'] ?? 0,
       caesarCount: map['caesarCount'] ?? 0,
       playfairCount: map['playfairCount'] ?? 0,
-      lastActivity: DateTime.parse(map['lastActivity'] ?? DateTime.now().toIso8601String()),
+      hillCount: map['hillCount'] ?? 0,
+      lastActivity: DateTime.parse(
+        map['lastActivity'] ?? DateTime.now().toIso8601String(),
+      ),
       dailyStats: Map<String, dynamic>.from(map['dailyStats'] ?? {}),
     );
   }
@@ -32,6 +37,7 @@ class UserStats {
       'totalCiphersSolved': totalCiphersSolved,
       'caesarCount': caesarCount,
       'playfairCount': playfairCount,
+      'hillCount': hillCount,
       'lastActivity': lastActivity.toIso8601String(),
       'dailyStats': dailyStats,
     };
@@ -42,6 +48,7 @@ class UserStats {
     int? totalCiphersSolved,
     int? caesarCount,
     int? playfairCount,
+    int? hillCount,
     DateTime? lastActivity,
     Map<String, dynamic>? dailyStats,
   }) {
@@ -50,6 +57,7 @@ class UserStats {
       totalCiphersSolved: totalCiphersSolved ?? this.totalCiphersSolved,
       caesarCount: caesarCount ?? this.caesarCount,
       playfairCount: playfairCount ?? this.playfairCount,
+      hillCount: hillCount ?? this.hillCount,
       lastActivity: lastActivity ?? this.lastActivity,
       dailyStats: dailyStats ?? this.dailyStats,
     );

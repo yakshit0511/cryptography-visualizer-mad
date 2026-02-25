@@ -27,6 +27,7 @@ class UserStatsService {
           totalCiphersSolved: 0,
           caesarCount: 0,
           playfairCount: 0,
+          hillCount: 0,
           lastActivity: DateTime.now(),
           dailyStats: {},
         );
@@ -60,12 +61,15 @@ class UserStatsService {
             'totalCiphersSolved': 1,
             'caesarCount': cipherType == 'Caesar' ? 1 : 0,
             'playfairCount': cipherType == 'Playfair' ? 1 : 0,
+            'hillCount': cipherType == 'Hill' ? 1 : 0,
             'lastActivity': DateTime.now().toIso8601String(),
             'dailyStats': {today: 1},
           });
         } else {
           final currentStats = UserStats.fromMap(snapshot.data()!);
-          final updatedDailyStats = Map<String, dynamic>.from(currentStats.dailyStats);
+          final updatedDailyStats = Map<String, dynamic>.from(
+            currentStats.dailyStats,
+          );
           updatedDailyStats[today] = (updatedDailyStats[today] ?? 0) + 1;
 
           transaction.update(docRef, {
@@ -76,6 +80,9 @@ class UserStatsService {
             'playfairCount': cipherType == 'Playfair'
                 ? currentStats.playfairCount + 1
                 : currentStats.playfairCount,
+            'hillCount': cipherType == 'Hill'
+                ? currentStats.hillCount + 1
+                : currentStats.hillCount,
             'lastActivity': DateTime.now().toIso8601String(),
             'dailyStats': updatedDailyStats,
           });
@@ -95,11 +102,11 @@ class UserStatsService {
         .doc(_currentUserId)
         .snapshots()
         .map((doc) {
-      if (doc.exists) {
-        return UserStats.fromMap(doc.data()!);
-      }
-      return null;
-    });
+          if (doc.exists) {
+            return UserStats.fromMap(doc.data()!);
+          }
+          return null;
+        });
   }
 
   // Get daily activity chart data (last 7 days)

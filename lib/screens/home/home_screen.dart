@@ -29,11 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // Refresh cipher history when returning to home screen
     final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
     cipherProvider.loadCipherHistory();
-    
+
     // Refresh auth data when returning to home screen
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.refreshUserData();
-    
+
     // Reload user name from SharedPreferences
     _loadUserData();
   }
@@ -125,10 +125,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Cipher Solutions',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          fontSize: isMobile ? 18 : 20,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                      fontSize: isMobile ? 18 : 20,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
@@ -136,7 +136,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildCipherCard(
                     context,
                     title: 'Caesar Cipher',
-                    description: 'Encrypt and decrypt text using circular shift substitution',
+                    description:
+                        'Encrypt and decrypt text using circular shift substitution',
                     icon: Icons.rotate_right_outlined,
                     color: AppColors.primary,
                     onTap: () {
@@ -149,11 +150,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildCipherCard(
                     context,
                     title: 'Playfair Cipher',
-                    description: 'Solve digraph encryption with visual 5×5 matrix grid',
+                    description:
+                        'Solve digraph encryption with visual 5×5 matrix grid',
                     icon: Icons.grid_3x3_outlined,
                     color: AppColors.secondary,
                     onTap: () {
                       Navigator.pushNamed(context, '/playfair');
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Hill Cipher Card
+                  _buildCipherCard(
+                    context,
+                    title: '🔥 Hill Cipher',
+                    description:
+                        'Visualize 3×3 matrix encryption and modular arithmetic',
+                    icon: Icons.grid_3x3,
+                    color: AppColors.info,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/hill');
                     },
                   ),
                   SizedBox(height: isMobile ? AppSpacing.xl : AppSpacing.xxl),
@@ -190,18 +206,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Welcome back!',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.white.withOpacity(0.8),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: AppColors.white.withOpacity(0.8),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     userName,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -248,9 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             'Visualize and learn cryptographic ciphers in real-time',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.white.withOpacity(0.8),
-                  fontSize: 14,
-                ),
+              color: AppColors.white.withOpacity(0.8),
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -287,35 +303,56 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(color: Colors.red, fontSize: 12),
                 ),
               ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    label: 'Ciphers Solved',
-                    value: cipherProvider.totalCount.toString(),
-                    icon: Icons.check_circle_outline,
-                    color: AppColors.success,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _buildStatCard(
-                    label: 'Caesar',
-                    value: cipherProvider.caesarCount.toString(),
-                    icon: Icons.rotate_right_outlined,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _buildStatCard(
-                    label: 'Playfair',
-                    value: cipherProvider.playfairCount.toString(),
-                    icon: Icons.grid_3x3_outlined,
-                    color: AppColors.secondary,
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 900;
+                final statWidth = isWide
+                    ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                    : (constraints.maxWidth - AppSpacing.md) / 2;
+
+                return Wrap(
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
+                  children: [
+                    SizedBox(
+                      width: statWidth,
+                      child: _buildStatCard(
+                        label: 'Ciphers Solved',
+                        value: cipherProvider.totalCount.toString(),
+                        icon: Icons.check_circle_outline,
+                        color: AppColors.success,
+                      ),
+                    ),
+                    SizedBox(
+                      width: statWidth,
+                      child: _buildStatCard(
+                        label: 'Caesar',
+                        value: cipherProvider.caesarCount.toString(),
+                        icon: Icons.rotate_right_outlined,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(
+                      width: statWidth,
+                      child: _buildStatCard(
+                        label: 'Playfair',
+                        value: cipherProvider.playfairCount.toString(),
+                        icon: Icons.grid_3x3_outlined,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                    SizedBox(
+                      width: statWidth,
+                      child: _buildStatCard(
+                        label: 'Hill',
+                        value: cipherProvider.hillCount.toString(),
+                        icon: Icons.grid_3x3,
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             // Manual refresh button for debugging
             SizedBox(height: AppSpacing.sm),
@@ -344,10 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
         boxShadow: AppShadows.cardShadow,
       ),
       child: Column(
@@ -358,30 +392,26 @@ class _HomeScreenState extends State<HomeScreen> {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? const Color(0xFFB0B0B0) 
-                      : Colors.black87,
-                ),
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : Colors.black87,
+            ),
           ),
         ],
       ),
@@ -403,10 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1.5,
-          ),
+          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.1),
@@ -427,20 +454,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         title,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFFE0E0E0) 
-                                  : Colors.black,
-                            ),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFE0E0E0)
+                              : Colors.black,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         description,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              height: 1.4,
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFFB0B0B0) 
-                                  : Colors.black87,
+                          height: 1.4,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : Colors.black87,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -460,11 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 28),
                 ),
               ],
             ),
@@ -479,9 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.md,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -494,10 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: AppSpacing.md),
                     const Text(
                       'Open Solver',
-                      style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
+                      style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
                   ],
                 ),
@@ -525,19 +543,15 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.stars_outlined,
-                color: AppColors.secondary,
-                size: 20,
-              ),
+              Icon(Icons.stars_outlined, color: AppColors.secondary, size: 20),
               const SizedBox(width: AppSpacing.md),
               Text(
                 'Key Features',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -557,10 +571,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeatureItem(String text) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.greyDark,
-            height: 1.5,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.greyDark, height: 1.5),
     );
   }
 }

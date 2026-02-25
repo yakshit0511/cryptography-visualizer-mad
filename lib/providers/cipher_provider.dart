@@ -4,7 +4,7 @@ import '../services/firestore_service.dart';
 
 class CipherProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<FirestoreHistoryItem> _cipherHistory = [];
   bool _isLoading = false;
   String? _error;
@@ -20,13 +20,17 @@ class CipherProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get totalCount => _cipherHistory.length;
-  int get caesarCount => _cipherHistory.where((item) => item.cipherType == 'Caesar').length;
-  int get playfairCount => _cipherHistory.where((item) => item.cipherType == 'Playfair').length;
+  int get caesarCount =>
+      _cipherHistory.where((item) => item.cipherType == 'Caesar').length;
+  int get playfairCount =>
+      _cipherHistory.where((item) => item.cipherType == 'Playfair').length;
+  int get hillCount =>
+      _cipherHistory.where((item) => item.cipherType == 'Hill').length;
 
   /// Start listening to real-time updates
   void startListening() {
     if (_isListening) return;
-    
+
     _isListening = true;
     _firestoreService.getHistoryStream().listen(
       (history) {
@@ -34,7 +38,9 @@ class CipherProvider extends ChangeNotifier {
         _isLoading = false;
         _error = null;
         notifyListeners();
-        print('📊 Cipher history updated: Total=${_cipherHistory.length}, Caesar=$caesarCount, Playfair=$playfairCount');
+        print(
+          '📊 Cipher history updated: Total=${_cipherHistory.length}, Caesar=$caesarCount, Playfair=$playfairCount, Hill=$hillCount',
+        );
       },
       onError: (error) {
         _error = error.toString();
@@ -57,7 +63,9 @@ class CipherProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       print('✅ Loaded ${_cipherHistory.length} items from Firestore');
-      print('   Caesar: $caesarCount, Playfair: $playfairCount');
+      print(
+        '   Caesar: $caesarCount, Playfair: $playfairCount, Hill: $hillCount',
+      );
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -84,7 +92,10 @@ class CipherProvider extends ChangeNotifier {
   }
 
   /// Update existing cipher
-  Future<bool> updateCipher(String documentId, FirestoreHistoryItem item) async {
+  Future<bool> updateCipher(
+    String documentId,
+    FirestoreHistoryItem item,
+  ) async {
     try {
       final success = await _firestoreService.updateHistory(documentId, item);
       if (success) {
@@ -140,7 +151,9 @@ class CipherProvider extends ChangeNotifier {
 
   /// Filter history by cipher type
   List<FirestoreHistoryItem> getHistoryByCipherType(String cipherType) {
-    return _cipherHistory.where((item) => item.cipherType == cipherType).toList();
+    return _cipherHistory
+        .where((item) => item.cipherType == cipherType)
+        .toList();
   }
 
   /// Refresh history
