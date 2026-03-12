@@ -11,6 +11,7 @@ import '../../models/history_item.dart';
 import '../../providers/cipher_provider.dart';
 import '../../services/history_service.dart';
 import '../../services/user_stats_service.dart';
+import '../../services/notification_service.dart';
 
 class HillCipherScreen extends StatefulWidget {
   const HillCipherScreen({super.key});
@@ -122,6 +123,9 @@ class _HillCipherScreenState extends State<HillCipherScreen>
         _outputText = result.output;
         _showAddToHistory = false;
       });
+
+      // tell the user we have a result
+      NotificationService().showInstantNotification();
 
       await _startVisualization();
       await _statsService.incrementCipherCount('Hill');

@@ -6,6 +6,7 @@ import '../../config/constants.dart';
 import '../../providers/cipher_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_drawer.dart';
+import '../../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -563,6 +564,31 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildFeatureItem('🔄 Step-by-step transformation display'),
           const SizedBox(height: AppSpacing.md),
           _buildFeatureItem('⚡ Instant results with clear output'),
+          const SizedBox(height: AppSpacing.lg),
+          // debug / testing buttons for notifications
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    NotificationService().showInstantNotification();
+                  },
+                  child: const Text('Test Instant Notification'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    NotificationService().scheduleNotification(
+                      const Duration(seconds: 10),
+                    );
+                  },
+                  child: const Text('Schedule 10s Reminder'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

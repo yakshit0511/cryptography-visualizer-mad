@@ -16,9 +16,14 @@ import 'screens/ciphers/hill_cipher_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'services/history_service.dart';
+import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cipher_provider.dart';
 import 'providers/theme_provider.dart';
+
+/// Global navigator key so that services (like notifications) can
+/// perform navigation without needing a BuildContext.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +39,10 @@ void main() async {
 
   // Initialize history service
   await HistoryService().loadHistory();
+
+  // Initialize notifications (local & push)
+  NotificationService.navigatorKey = navigatorKey;
+  await NotificationService().initNotifications();
 
   runApp(const MyApp());
 }
@@ -70,6 +79,7 @@ class _MyAppState extends State<MyApp> {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             title: 'Cryptography Visualizer',
             theme: AppTheme.lightTheme,

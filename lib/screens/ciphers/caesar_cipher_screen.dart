@@ -8,6 +8,7 @@ import '../../models/history_item.dart';
 import '../../models/firestore_history_item.dart';
 import '../../services/history_service.dart';
 import '../../services/user_stats_service.dart';
+import '../../services/notification_service.dart';
 import '../../providers/cipher_provider.dart';
 
 class CaesarCipherScreen extends StatefulWidget {
@@ -23,7 +24,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
   final TextEditingController _keyController = TextEditingController(text: '3');
   final HistoryService _historyService = HistoryService();
   final UserStatsService _statsService = UserStatsService();
-  
+
   int _shiftValue = 3;
   String _outputText = '';
   String _operationType = 'Encrypt';
@@ -32,7 +33,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
   bool _showResult = false;
   bool _showAddToHistory = false;
   bool _useSlider = true; // Toggle between slider and keyboard
-  
+
   late AnimationController _buttonAnimationController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -40,7 +41,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -48,48 +49,41 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeInOut,
     );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.08,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
     _slideController.forward();
     _historyService.loadHistory();
   }
-  
+
   @override
   void dispose() {
     _inputController.dispose();
@@ -100,49 +94,52 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
     _pulseController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _processText() async {
     if (_inputController.text.isEmpty) {
       _showSnackBar('Please enter text to process', isError: true);
       return;
     }
-    
+
     setState(() {
       _isProcessing = true;
       _showResult = false;
       _showAddToHistory = false;
       _transformationSteps = [];
     });
-    
+
     // Animate button press
     await _buttonAnimationController.forward();
     await _buttonAnimationController.reverse();
-    
+
     bool isEncrypt = _operationType == 'Encrypt';
-    
+
     // Get transformation steps
     _transformationSteps = CaesarLogic.getStepByStepTransformation(
       _inputController.text,
       _shiftValue,
       isEncrypt,
     );
-    
+
     // Animate each character transformation
     String result = isEncrypt
         ? CaesarLogic.encrypt(_inputController.text, _shiftValue)
         : CaesarLogic.decrypt(_inputController.text, _shiftValue);
-    
+
     setState(() {
       _outputText = result;
       _showResult = true;
     });
-    
+
+    // notify the user that the cipher process is finished
+    NotificationService().showInstantNotification();
+
     // Allow UI to settle before starting animations
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     // Increment user stats
     await _statsService.incrementCipherCount('Caesar');
-    
+
     // Show "Add to History" button after animation completes
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
@@ -152,13 +149,13 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       });
     }
   }
-  
+
   Future<void> _addToHistory() async {
     if (_outputText.isEmpty) return;
-    
+
     // Show loading indicator
     setState(() => _showAddToHistory = false);
-    
+
     // Save to local history (SharedPreferences)
     final historyItem = HistoryItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -170,12 +167,12 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       timestamp: DateTime.now(),
     );
     await _historyService.addItem(historyItem);
-    
+
     // Prepare step descriptions for Firestore
     List<String> stepDescriptions = _transformationSteps.map((step) {
       return '${step['original']} → ${step['transformed']} (${step['explanation']})';
     }).toList();
-    
+
     // Save to Firestore
     final firestoreItem = FirestoreHistoryItem(
       cipherType: 'Caesar',
@@ -186,46 +183,56 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       key: null,
       steps: stepDescriptions,
     );
-    
+
     // Use CipherProvider for automatic UI updates
     final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
     final success = await cipherProvider.addCipher(firestoreItem);
-    
+
     setState(() => _showAddToHistory = true);
-    
+
     if (success) {
       _showSnackBar('✅ Added to History & Saved to Cloud!', isSuccess: true);
     } else {
       _showSnackBar('⚠️ Saved locally, but cloud sync failed', isError: true);
     }
   }
-  
+
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     _showSnackBar('Copied to clipboard!', isSuccess: true);
   }
-  
-  void _showSnackBar(String message, {bool isSuccess = false, bool isError = false}) {
+
+  void _showSnackBar(
+    String message, {
+    bool isSuccess = false,
+    bool isError = false,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(
-              isSuccess ? Icons.check_circle : (isError ? Icons.error : Icons.info),
+              isSuccess
+                  ? Icons.check_circle
+                  : (isError ? Icons.error : Icons.info),
               color: AppColors.white,
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: isSuccess ? AppColors.success : (isError ? AppColors.error : AppColors.primary),
+        backgroundColor: isSuccess
+            ? AppColors.success
+            : (isError ? AppColors.error : AppColors.primary),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -290,7 +297,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildOperationSelector() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -301,9 +308,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _buildOperationButton('Encrypt', Icons.lock_outline),
-          ),
+          Expanded(child: _buildOperationButton('Encrypt', Icons.lock_outline)),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _buildOperationButton('Decrypt', Icons.lock_open_outlined),
@@ -312,7 +317,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildOperationButton(String operation, IconData icon) {
     final isSelected = _operationType == operation;
     return GestureDetector(
@@ -347,7 +352,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildInputSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -381,11 +386,15 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
               hintText: 'Enter text to ${_operationType.toLowerCase()}...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -398,7 +407,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildKeyInputSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -485,11 +494,15 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
                 prefixIcon: Icon(Icons.keyboard, color: AppColors.secondary),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  borderSide: BorderSide(color: AppColors.secondary.withOpacity(0.3)),
+                  borderSide: BorderSide(
+                    color: AppColors.secondary.withOpacity(0.3),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  borderSide: BorderSide(color: AppColors.secondary.withOpacity(0.3)),
+                  borderSide: BorderSide(
+                    color: AppColors.secondary.withOpacity(0.3),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -511,17 +524,16 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
           ],
           const SizedBox(height: AppSpacing.sm),
           Text(
-            _useSlider ? 'Slide to adjust shift value' : 'Type shift value between -25 and 25',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.grey,
-            ),
+            _useSlider
+                ? 'Slide to adjust shift value'
+                : 'Type shift value between -25 and 25',
+            style: TextStyle(fontSize: 12, color: AppColors.grey),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildProcessButton() {
     return ScaleTransition(
       scale: _buttonAnimationController.drive(
@@ -550,7 +562,9 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(_operationType == 'Encrypt' ? Icons.lock : Icons.lock_open),
+                  Icon(
+                    _operationType == 'Encrypt' ? Icons.lock : Icons.lock_open,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Text(
                     _operationType,
@@ -564,7 +578,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildOutputSection() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -606,7 +620,11 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.output, color: AppColors.success, size: 20),
+                          Icon(
+                            Icons.output,
+                            color: AppColors.success,
+                            size: 20,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Output Text',
@@ -650,10 +668,10 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       },
     );
   }
-  
+
   Widget _buildTransformationSteps() {
     if (_transformationSteps.isEmpty) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -726,10 +744,14 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
                           ),
                           // Black arrow with animation
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                            ),
                             child: TweenAnimationBuilder<double>(
                               tween: Tween(begin: 0.0, end: 1.0),
-                              duration: Duration(milliseconds: 500 + (index * 100)),
+                              duration: Duration(
+                                milliseconds: 500 + (index * 100),
+                              ),
                               curve: Curves.easeInOut,
                               builder: (context, arrowValue, child) {
                                 return Transform.scale(
@@ -779,7 +801,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildAddToHistoryButton() {
     return ScaleTransition(
       scale: _pulseAnimation,
@@ -797,15 +819,12 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
         icon: const Icon(Icons.add_circle_outline),
         label: const Text(
           'Add to History',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
-  
+
   // Get unique color for each character in Caesar cipher
   Color _getCharacterColor(int index) {
     final colors = [

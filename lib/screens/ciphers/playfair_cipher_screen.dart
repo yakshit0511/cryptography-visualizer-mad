@@ -9,6 +9,7 @@ import '../../models/history_item.dart';
 import '../../models/firestore_history_item.dart';
 import '../../services/history_service.dart';
 import '../../services/user_stats_service.dart';
+import '../../services/notification_service.dart';
 import '../../providers/cipher_provider.dart';
 
 class PlayfairCipherScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
   final TextEditingController _keyController = TextEditingController();
   final HistoryService _historyService = HistoryService();
   final UserStatsService _statsService = UserStatsService();
-  
+
   List<List<String>> _matrix = [];
   String _outputText = '';
   String _operationType = 'Encrypt';
@@ -33,11 +34,12 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
   bool _showAddToHistory = false;
   Set<String> _highlightedCells = {};
   Map<String, Color> _letterColors = {}; // Maps each letter to its color
-  List<Map<String, dynamic>> _arrowAnimations = []; // Stores arrow animation data
-  
+  List<Map<String, dynamic>> _arrowAnimations =
+      []; // Stores arrow animation data
+
   List<Map<String, dynamic>> _detailedSteps = [];
   int _currentStepIndex = -1;
-  
+
   late AnimationController _fadeController;
   late AnimationController _matrixAnimationController;
   late AnimationController _stepAnimationController;
@@ -47,7 +49,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
   late Animation<double> _matrixFadeAnimation;
   late Animation<double> _pulseAnimation;
   late Animation<double> _arrowAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -55,55 +57,51 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _matrixAnimationController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _stepAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _arrowAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeInOut,
     );
-    
+
     _arrowAnimation = CurvedAnimation(
       parent: _arrowAnimationController,
       curve: Curves.easeInOutCubic,
     );
-    
+
     _matrixFadeAnimation = CurvedAnimation(
       parent: _matrixAnimationController,
       curve: Curves.easeInOut,
     );
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.08,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
     _historyService.loadHistory();
     _generateMatrix();
   }
-  
+
   @override
   void dispose() {
     _inputController.dispose();
@@ -115,7 +113,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     _arrowAnimationController.dispose();
     super.dispose();
   }
-  
+
   void _generateMatrix() {
     if (_keyController.text.isNotEmpty) {
       setState(() {
@@ -125,18 +123,18 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       _matrixAnimationController.forward();
     }
   }
-  
+
   Future<void> _processText() async {
     if (_inputController.text.isEmpty) {
       _showSnackBar('Please enter text to process', isError: true);
       return;
     }
-    
+
     if (_keyController.text.isEmpty) {
       _showSnackBar('Please enter a key', isError: true);
       return;
     }
-    
+
     setState(() {
       _isProcessing = true;
       _showResult = false;
@@ -147,28 +145,28 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       _letterColors = {};
       _arrowAnimations = [];
     });
-    
+
     // Generate matrix if key changed
     _generateMatrix();
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     bool isEncrypt = _operationType == 'Encrypt';
-    
+
     // Prepare plaintext
     String preparedText = PlayfairLogic.preparePlaintext(_inputController.text);
-    
+
     // Process each digraph with detailed steps
     String result = '';
     List<String> digraphs = [];
     for (int i = 0; i < preparedText.length; i += 2) {
       digraphs.add(preparedText.substring(i, i + 2));
     }
-    
+
     for (int i = 0; i < digraphs.length; i++) {
       String digraph = digraphs[i];
       String processedDigraph;
       Map<String, dynamic> stepDetails;
-      
+
       if (isEncrypt) {
         var encryptResult = PlayfairLogic.encryptDigraph(digraph, _matrix);
         processedDigraph = encryptResult['encrypted'];
@@ -178,9 +176,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         processedDigraph = decryptResult['decrypted'];
         stepDetails = decryptResult;
       }
-      
+
       result += processedDigraph;
-      
+
       // Create detailed step information
       _detailedSteps.add({
         'stepNumber': i + 1,
@@ -192,31 +190,36 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         'positions': stepDetails['positions'],
       });
     }
-    
+
     setState(() {
       _outputText = result;
       _showResult = true;
     });
-    
+
+    // notify user that the operation is complete
+    NotificationService().showInstantNotification();
+
     // Animate each step slowly
     for (int i = 0; i < _detailedSteps.length; i++) {
       var step = _detailedSteps[i];
-      Color stepColor1 = _getStepColor(i * 2);     // First letter color
+      Color stepColor1 = _getStepColor(i * 2); // First letter color
       Color stepColor2 = _getStepColor(i * 2 + 1); // Second letter color
       String inputDigraph = step['inputDigraph'];
       String outputDigraph = step['outputDigraph'];
-      
+
       // Set DIFFERENT colors for each letter in the digraph
       setState(() {
         _currentStepIndex = i;
         _highlightedCells = Set<String>.from(step['highlightCells']);
         _letterColors = {
-          inputDigraph[0]: stepColor1,   // First input letter
-          inputDigraph[1]: stepColor2,   // Second input letter
-          outputDigraph[0]: stepColor1,  // First output letter (same color as first input)
-          outputDigraph[1]: stepColor2,  // Second output letter (same color as second input)
+          inputDigraph[0]: stepColor1, // First input letter
+          inputDigraph[1]: stepColor2, // Second input letter
+          outputDigraph[0]:
+              stepColor1, // First output letter (same color as first input)
+          outputDigraph[1]:
+              stepColor2, // Second output letter (same color as second input)
         };
-        
+
         // Create arrow animations for each letter pair with BLACK arrows
         _arrowAnimations = [
           {
@@ -233,42 +236,42 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
           },
         ];
       });
-      
+
       _stepAnimationController.reset();
       await _stepAnimationController.forward();
-      
+
       // Animate arrows
       _arrowAnimationController.reset();
       await _arrowAnimationController.forward();
-      
+
       // Hold the highlight for a moment
       await Future.delayed(const Duration(milliseconds: 1500));
-      
+
       setState(() {
         _highlightedCells = {};
         _letterColors = {};
         _arrowAnimations = [];
       });
-      
+
       await Future.delayed(const Duration(milliseconds: 300));
     }
-    
+
     // Increment user stats
     await _statsService.incrementCipherCount('Playfair');
-    
+
     setState(() {
       _isProcessing = false;
       _showAddToHistory = true;
       _currentStepIndex = -1;
     });
   }
-  
+
   Future<void> _addToHistory() async {
     if (_outputText.isEmpty) return;
-    
+
     // Show loading indicator
     setState(() => _showAddToHistory = false);
-    
+
     // Save to local history (SharedPreferences)
     final historyItem = HistoryItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -280,12 +283,12 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       timestamp: DateTime.now(),
     );
     await _historyService.addItem(historyItem);
-    
+
     // Prepare step descriptions for Firestore
     List<String> stepDescriptions = _detailedSteps.map((step) {
       return 'Step ${step['stepNumber']}: ${step['inputDigraph']} → ${step['outputDigraph']} [${step['rule']}] - ${step['explanation']}';
     }).toList();
-    
+
     // Save to Firestore
     final firestoreItem = FirestoreHistoryItem(
       cipherType: 'Playfair',
@@ -296,46 +299,56 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       key: _keyController.text,
       steps: stepDescriptions,
     );
-    
+
     // Use CipherProvider for automatic UI updates
     final cipherProvider = Provider.of<CipherProvider>(context, listen: false);
     final success = await cipherProvider.addCipher(firestoreItem);
-    
+
     setState(() => _showAddToHistory = true);
-    
+
     if (success) {
       _showSnackBar('✅ Added to History & Saved to Cloud!', isSuccess: true);
     } else {
       _showSnackBar('⚠️ Saved locally, but cloud sync failed', isError: true);
     }
   }
-  
+
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     _showSnackBar('Copied to clipboard!', isSuccess: true);
   }
-  
-  void _showSnackBar(String message, {bool isSuccess = false, bool isError = false}) {
+
+  void _showSnackBar(
+    String message, {
+    bool isSuccess = false,
+    bool isError = false,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(
-              isSuccess ? Icons.check_circle : (isError ? Icons.error : Icons.info),
+              isSuccess
+                  ? Icons.check_circle
+                  : (isError ? Icons.error : Icons.info),
               color: AppColors.white,
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: isSuccess ? AppColors.success : (isError ? AppColors.error : AppColors.secondary),
+        backgroundColor: isSuccess
+            ? AppColors.success
+            : (isError ? AppColors.error : AppColors.secondary),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -400,7 +413,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildOperationSelector() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -411,9 +424,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _buildOperationButton('Encrypt', Icons.lock_outline),
-          ),
+          Expanded(child: _buildOperationButton('Encrypt', Icons.lock_outline)),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _buildOperationButton('Decrypt', Icons.lock_open_outlined),
@@ -422,7 +433,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildOperationButton(String operation, IconData icon) {
     final isSelected = _operationType == operation;
     return GestureDetector(
@@ -434,7 +445,10 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
-                  colors: [AppColors.secondary, AppColors.secondary.withOpacity(0.7)],
+                  colors: [
+                    AppColors.secondary,
+                    AppColors.secondary.withOpacity(0.7),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
@@ -463,7 +477,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildKeyInputSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -503,11 +517,15 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.secondary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.secondary.withOpacity(0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.secondary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.secondary.withOpacity(0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -523,16 +541,13 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Matrix updates automatically as you type',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.grey,
-            ),
+            style: TextStyle(fontSize: 12, color: AppColors.grey),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildMatrixDisplay() {
     return FadeTransition(
       opacity: _matrixFadeAnimation,
@@ -579,11 +594,12 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 5,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
                     itemCount: 25,
                     itemBuilder: (context, index) {
                       int row = index ~/ 5;
@@ -592,7 +608,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                       String displayLetter = letter == 'I' ? 'I/J' : letter;
                       bool isHighlighted = _highlightedCells.contains(letter);
                       Color? cellColor = _letterColors[letter];
-                  
+
                       return TweenAnimationBuilder<double>(
                         key: ValueKey('$row-$col-${_matrix[row][col]}'),
                         tween: Tween(begin: 0.0, end: 1.0),
@@ -621,7 +637,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                                 boxShadow: isHighlighted && cellColor != null
                                     ? [
                                         BoxShadow(
@@ -632,7 +650,8 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: AppColors.secondary.withOpacity(0.3),
+                                          color: AppColors.secondary
+                                              .withOpacity(0.3),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -643,7 +662,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                   displayLetter,
                                   style: TextStyle(
                                     fontSize: isHighlighted ? 20 : 16,
-                                    fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                                    fontWeight: isHighlighted
+                                        ? FontWeight.bold
+                                        : FontWeight.w600,
                                     color: AppColors.white,
                                     letterSpacing: letter == 'I' ? 0 : 1,
                                   ),
@@ -686,7 +707,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildInputSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -720,11 +741,15 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
               hintText: 'Enter text to ${_operationType.toLowerCase()}...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -740,7 +765,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildProcessButton() {
     return ElevatedButton(
       onPressed: _isProcessing ? null : _processText,
@@ -765,7 +790,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(_operationType == 'Encrypt' ? Icons.lock : Icons.lock_open),
+                Icon(
+                  _operationType == 'Encrypt' ? Icons.lock : Icons.lock_open,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Text(
                   '$_operationType with Playfair',
@@ -778,7 +805,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
             ),
     );
   }
-  
+
   Widget _buildOutputSection() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -820,7 +847,11 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.output, color: AppColors.success, size: 20),
+                          Icon(
+                            Icons.output,
+                            color: AppColors.success,
+                            size: 20,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Output Text',
@@ -864,7 +895,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       },
     );
   }
-  
+
   Widget _buildDetailedStepsDisplay() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -898,7 +929,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
             itemBuilder: (context, index) {
               var step = _detailedSteps[index];
               bool isCurrent = index == _currentStepIndex;
-              
+
               return TweenAnimationBuilder<double>(
                 key: ValueKey(index),
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -943,7 +974,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                   padding: const EdgeInsets.all(AppSpacing.sm),
                                   decoration: BoxDecoration(
                                     color: AppColors.secondary,
-                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
                                   ),
                                   child: Text(
                                     'Step ${step['stepNumber']}',
@@ -962,7 +995,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                   ),
                                   decoration: BoxDecoration(
                                     color: _getRuleColor(step['rule']),
-                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
                                   ),
                                   child: Text(
                                     step['rule'].toString().toUpperCase(),
@@ -980,7 +1015,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _buildDigraphBox(
-                                  step['inputDigraph'], 
+                                  step['inputDigraph'],
                                   _getStepColor(index),
                                 ),
                                 const SizedBox(width: AppSpacing.md),
@@ -991,7 +1026,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                                 ),
                                 const SizedBox(width: AppSpacing.md),
                                 _buildDigraphBox(
-                                  step['outputDigraph'], 
+                                  step['outputDigraph'],
                                   _getStepColor(index),
                                 ),
                               ],
@@ -1001,7 +1036,9 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
                               padding: const EdgeInsets.all(AppSpacing.sm),
                               decoration: BoxDecoration(
                                 color: AppColors.background,
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Text(
                                 step['explanation'],
@@ -1024,7 +1061,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Widget _buildDigraphBox(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -1057,7 +1094,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       ),
     );
   }
-  
+
   Color _getRuleColor(String rule) {
     switch (rule.toLowerCase()) {
       case 'same row':
@@ -1070,7 +1107,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         return AppColors.secondary;
     }
   }
-  
+
   Color _getStepColor(int stepIndex) {
     // Generate unique color for each step using a predefined palette
     final colors = [
@@ -1092,12 +1129,16 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     ];
     return colors[stepIndex % colors.length];
   }
-  
-  Widget _buildArrowOverlay(String fromLetter, String toLetter, Color arrowColor) {
+
+  Widget _buildArrowOverlay(
+    String fromLetter,
+    String toLetter,
+    Color arrowColor,
+  ) {
     // Find positions of from and to letters in matrix
     Map<String, int>? fromPos;
     Map<String, int>? toPos;
-    
+
     for (int row = 0; row < 5; row++) {
       for (int col = 0; col < 5; col++) {
         if (_matrix[row][col] == fromLetter) {
@@ -1108,28 +1149,30 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         }
       }
     }
-    
+
     if (fromPos == null || toPos == null) {
       return const SizedBox.shrink();
     }
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate actual cell dimensions based on available space
         const int gridCount = 5;
         const double spacing = 8.0;
-        
+
         // Calculate total available space and cell size
         final double totalSpacing = spacing * (gridCount - 1);
         final double availableWidth = constraints.maxWidth;
         final double cellSize = (availableWidth - totalSpacing) / gridCount;
-        
+
         // Calculate center positions for each cell
-        double fromX = (fromPos!['col']! * (cellSize + spacing)) + (cellSize / 2);
-        double fromY = (fromPos['row']! * (cellSize + spacing)) + (cellSize / 2);
+        double fromX =
+            (fromPos!['col']! * (cellSize + spacing)) + (cellSize / 2);
+        double fromY =
+            (fromPos['row']! * (cellSize + spacing)) + (cellSize / 2);
         double toX = (toPos!['col']! * (cellSize + spacing)) + (cellSize / 2);
         double toY = (toPos['row']! * (cellSize + spacing)) + (cellSize / 2);
-        
+
         return AnimatedBuilder(
           animation: _arrowAnimation,
           builder: (context, child) {
@@ -1149,7 +1192,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
       },
     );
   }
-  
+
   Widget _buildAddToHistoryButton() {
     return ScaleTransition(
       scale: _pulseAnimation,
@@ -1167,10 +1210,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
         icon: const Icon(Icons.add_circle_outline),
         label: const Text(
           'Add to History',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -1198,65 +1238,67 @@ class ArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (progress == 0) return;
-    
+
     // Calculate current end point based on progress
     double currentX = fromX + (toX - fromX) * progress;
     double currentY = fromY + (toY - fromY) * progress;
-    
+
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 5.0 // Increased from 4.0 for better visibility
+      ..strokeWidth =
+          5.0 // Increased from 4.0 for better visibility
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    
+
     // Draw the arrow line with a slight shadow for visibility
     final shadowPaint = Paint()
       ..color = Colors.white.withOpacity(0.5)
       ..strokeWidth = 7.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    
+
     // Draw shadow first
     canvas.drawLine(
       Offset(fromX, fromY),
       Offset(currentX, currentY),
       shadowPaint,
     );
-    
+
     // Draw the main arrow line
-    canvas.drawLine(
-      Offset(fromX, fromY),
-      Offset(currentX, currentY),
-      paint,
-    );
-    
+    canvas.drawLine(Offset(fromX, fromY), Offset(currentX, currentY), paint);
+
     // Draw arrowhead at the end if progress is sufficient
     if (progress > 0.7) {
       final arrowPaint = Paint()
         ..color = color
         ..style = PaintingStyle.fill;
-      
+
       // Calculate arrowhead angle
       double angle = math.atan2(toY - fromY, toX - fromX);
-      
-      const double arrowSize = 12.0; // Increased from 10.0 for better visibility
+
+      const double arrowSize =
+          12.0; // Increased from 10.0 for better visibility
       const double arrowAngle = math.pi / 6; // 30 degrees
-      
+
       final arrowPath = Path();
       arrowPath.moveTo(currentX, currentY);
-      
+
       // Left side of arrowhead
       arrowPath.lineTo(
-        currentX - arrowSize * math.cos(angle - arrowAngle) * (progress - 0.7) / 0.3,
-        currentY - arrowSize * math.sin(angle - arrowAngle) * (progress - 0.7) / 0.3,
+        currentX -
+            arrowSize * math.cos(angle - arrowAngle) * (progress - 0.7) / 0.3,
+        currentY -
+            arrowSize * math.sin(angle - arrowAngle) * (progress - 0.7) / 0.3,
       );
-      
+
       // Right side of arrowhead
       arrowPath.lineTo(
-        currentX - arrowSize * math.cos(angle + arrowAngle) * (progress - 0.7) / 0.3,
-        currentY - arrowSize * math.sin(angle + arrowAngle) * (progress - 0.7) / 0.3,
+        currentX -
+            arrowSize * math.cos(angle + arrowAngle) * (progress - 0.7) / 0.3,
+        currentY -
+            arrowSize * math.sin(angle + arrowAngle) * (progress - 0.7) / 0.3,
       );
-      
+
       arrowPath.close();
       canvas.drawPath(arrowPath, arrowPaint);
     }
