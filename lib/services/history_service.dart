@@ -8,71 +8,65 @@ class HistoryService {
   static final HistoryService _instance = HistoryService._internal();
   factory HistoryService() => _instance;
   HistoryService._internal();
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final List<HistoryItem> _history = [];
-  String? _cachedUserId;
-  
-  String get _storageKey {
-    // Cache the user ID to persist across logout
-    if (_cachedUserId == null || _cachedUserId!.isEmpty) {
-      _cachedUserId = _auth.currentUser?.uid ?? 'guest';
-    }
-    return 'cipher_history_$_cachedUserId';
-  }
-  
+
+  String get _currentUserId => _auth.currentUser?.uid ?? 'guest';
+
+  String get _storageKey => 'cipher_history_$_currentUserId';
+
   List<HistoryItem> get history => List.unmodifiable(_history);
-  
+
   /// Load history from SharedPreferences (per user)
   Future<void> loadHistory() async {
     try {
-      // Update cached user ID if available
-      if (_auth.currentUser?.uid != null) {
-        _cachedUserId = _auth.currentUser!.uid;
-      }
-      
       final prefs = await SharedPreferences.getInstance();
       final String? historyJson = prefs.getString(_storageKey);
-      
+
+      _history.clear();
       if (historyJson != null) {
         final List<dynamic> decoded = json.decode(historyJson);
-        _history.clear();
-        _history.addAll(decoded.map((item) => HistoryItem.fromMap(item)).toList());
+        _history.addAll(
+          decoded.map((item) => HistoryItem.fromMap(item)).toList(),
+        );
       }
     } catch (e) {
       print('Error loading history: $e');
     }
   }
-  
+
   /// Save history to SharedPreferences
   Future<void> _saveHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String historyJson = json.encode(_history.map((item) => item.toMap()).toList());
+      final String historyJson = json.encode(
+        _history.map((item) => item.toMap()).toList(),
+      );
       await prefs.setString(_storageKey, historyJson);
     } catch (e) {
       print('Error saving history: $e');
     }
   }
-  
+
   /// Add item to history
   Future<void> addItem(HistoryItem item) async {
     _history.insert(0, item); // Add to beginning (most recent first)
     await _saveHistory();
   }
-  
+
   /// Remove item from history
   Future<void> removeItem(String id) async {
     _history.removeWhere((item) => item.id == id);
     await _saveHistory();
   }
-  
+
   /// Clear all history
   Future<void> clearHistory() async {
     _history.clear();
     await _saveHistory();
   }
-  
+
   /// Get item by ID
   HistoryItem? getItem(String id) {
     try {
@@ -81,12 +75,12 @@ class HistoryService {
       return null;
     }
   }
-  
+
   /// Filter history by cipher name
   List<HistoryItem> getHistoryByCipher(String cipherName) {
     return _history.where((item) => item.cipherName == cipherName).toList();
   }
-  
+
   /// Get all history items
   List<HistoryItem> getHistory() {
     return List.unmodifiable(_history);

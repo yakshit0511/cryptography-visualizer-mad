@@ -125,7 +125,11 @@ class _HillCipherScreenState extends State<HillCipherScreen>
       });
 
       // tell the user we have a result
-      NotificationService().showInstantNotification();
+      if (isDecrypt) {
+        NotificationService().showDecryptNotification();
+      } else {
+        NotificationService().showEncryptNotification();
+      }
 
       await _startVisualization();
       await _statsService.incrementCipherCount('Hill');
@@ -193,6 +197,7 @@ class _HillCipherScreenState extends State<HillCipherScreen>
 
     if (success) {
       _showSnackBar('✅ Added to History & Saved to Cloud!', isSuccess: true);
+      NotificationService().showAddToHistoryNotification();
     } else {
       _showSnackBar('⚠️ Saved locally, but cloud sync failed', isError: true);
     }

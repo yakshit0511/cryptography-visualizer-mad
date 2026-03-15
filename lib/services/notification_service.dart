@@ -45,6 +45,13 @@ class NotificationService {
       },
     );
 
+    // If the app was launched via a notification tap, navigate accordingly.
+    final NotificationAppLaunchDetails? launchDetails =
+        await _flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      _onSelectNotification(launchDetails?.notificationResponse?.payload);
+    }
+
     // register the channel (Android only)
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -59,9 +66,6 @@ class NotificationService {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     NotificationSettings settings = await messaging.requestPermission();
     debugPrint('FCM permission status: ${settings.authorizationStatus}');
-
-    // schedule a quick reminder after 10 seconds for verification
-    scheduleNotification(const Duration(seconds: 10));
 
     // handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -78,7 +82,7 @@ class NotificationService {
   }
 
   /// Instant local notification used when encryption completes.
-  Future<void> showInstantNotification() async {
+  Future<void> showEncryptNotification({String payload = 'history'}) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'default_channel',
@@ -92,14 +96,81 @@ class NotificationService {
 
     await _flutterLocalNotificationsPlugin.show(
       0,
-      'Cipher Complete',
+      'Encryption Complete',
       'Your encryption process finished successfully.',
       details,
+      payload: payload,
+    );
+  }
+
+  /// Instant local notification used when decryption completes.
+  Future<void> showDecryptNotification({String payload = 'history'}) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'default_channel',
+          'Default Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await _flutterLocalNotificationsPlugin.show(
+      2,
+      'Decryption Complete',
+      'Your decryption process finished successfully.',
+      details,
+      payload: payload,
+    );
+  }
+
+  /// Instant local notification when adding to history.
+  Future<void> showAddToHistoryNotification({String payload = 'history'}) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'default_channel',
+          'Default Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await _flutterLocalNotificationsPlugin.show(
+      3,
+      'Added to History',
+      'Your cipher operation has been saved to history.',
+      details,
+      payload: payload,
+    );
+  }
+
+  /// Instant local notification when profile is updated.
+  Future<void> showUpdateProfileNotification({String payload = 'profile'}) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'default_channel',
+          'Default Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await _flutterLocalNotificationsPlugin.show(
+      4,
+      'Profile Updated',
+      'Your profile has been updated successfully.',
+      details,
+      payload: payload,
     );
   }
 
   /// Schedule a notification after the given [delay].
-  Future<void> scheduleNotification(Duration delay) async {
+  Future<void> scheduleNotification(Duration delay, {String payload = 'history'}) async {
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       1,
       'Reminder',
@@ -116,12 +187,22 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
     );
   }
 
   Future<void> _onSelectNotification(String? payload) async {
     // called when a local notification is tapped
-    handleNotificationClick();
+    String route = '/history'; // default
+    if (payload == 'profile') {
+      route = '/profile';
+    } else if (payload == 'home') {
+      route = '/home';
+    }
+    // Navigate to the appropriate screen
+    if (navigatorKey?.currentState != null) {
+      navigatorKey!.currentState!.pushNamed(route);
+    }
   }
 
   /// Shared handler for any notification click (instant, scheduled, or push).

@@ -132,7 +132,11 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
     });
 
     // notify the user that the cipher process is finished
-    NotificationService().showInstantNotification();
+    if (isEncrypt) {
+      NotificationService().showEncryptNotification();
+    } else {
+      NotificationService().showDecryptNotification();
+    }
 
     // Allow UI to settle before starting animations
     await Future.delayed(const Duration(milliseconds: 100));
@@ -168,6 +172,8 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
     );
     await _historyService.addItem(historyItem);
 
+    Provider.of<CipherProvider>(context, listen: false).notifyListeners();
+
     // Prepare step descriptions for Firestore
     List<String> stepDescriptions = _transformationSteps.map((step) {
       return '${step['original']} → ${step['transformed']} (${step['explanation']})';
@@ -192,6 +198,7 @@ class _CaesarCipherScreenState extends State<CaesarCipherScreen>
 
     if (success) {
       _showSnackBar('✅ Added to History & Saved to Cloud!', isSuccess: true);
+      NotificationService().showAddToHistoryNotification();
     } else {
       _showSnackBar('⚠️ Saved locally, but cloud sync failed', isError: true);
     }

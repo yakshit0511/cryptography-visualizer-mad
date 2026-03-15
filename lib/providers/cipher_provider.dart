@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/firestore_history_item.dart';
+import '../models/history_item.dart';
 import '../services/firestore_service.dart';
+import '../services/history_service.dart';
 
 class CipherProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -19,13 +21,48 @@ class CipherProvider extends ChangeNotifier {
   List<FirestoreHistoryItem> get cipherHistory => _cipherHistory;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  int get totalCount => _cipherHistory.length;
-  int get caesarCount =>
-      _cipherHistory.where((item) => item.cipherType == 'Caesar').length;
-  int get playfairCount =>
-      _cipherHistory.where((item) => item.cipherType == 'Playfair').length;
-  int get hillCount =>
-      _cipherHistory.where((item) => item.cipherType == 'Hill').length;
+  List<HistoryItem> get _localHistory => HistoryService().history;
+
+  int get totalCount {
+    if (_cipherHistory.isNotEmpty) return _cipherHistory.length;
+    return _localHistory.length;
+  }
+
+  int get caesarCount {
+    if (_cipherHistory.isNotEmpty) {
+      return _cipherHistory
+          .where((item) => item.cipherType.toLowerCase().contains('caesar'))
+          .length;
+    }
+
+    return _localHistory
+        .where((item) => item.cipherName.toLowerCase().contains('caesar'))
+        .length;
+  }
+
+  int get playfairCount {
+    if (_cipherHistory.isNotEmpty) {
+      return _cipherHistory
+          .where((item) => item.cipherType.toLowerCase().contains('playfair'))
+          .length;
+    }
+
+    return _localHistory
+        .where((item) => item.cipherName.toLowerCase().contains('playfair'))
+        .length;
+  }
+
+  int get hillCount {
+    if (_cipherHistory.isNotEmpty) {
+      return _cipherHistory
+          .where((item) => item.cipherType.toLowerCase().contains('hill'))
+          .length;
+    }
+
+    return _localHistory
+        .where((item) => item.cipherName.toLowerCase().contains('hill'))
+        .length;
+  }
 
   /// Start listening to real-time updates
   void startListening() {

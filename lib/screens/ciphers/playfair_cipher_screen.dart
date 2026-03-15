@@ -197,7 +197,11 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     });
 
     // notify user that the operation is complete
-    NotificationService().showInstantNotification();
+    if (isEncrypt) {
+      NotificationService().showEncryptNotification();
+    } else {
+      NotificationService().showDecryptNotification();
+    }
 
     // Animate each step slowly
     for (int i = 0; i < _detailedSteps.length; i++) {
@@ -284,6 +288,8 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
     );
     await _historyService.addItem(historyItem);
 
+    Provider.of<CipherProvider>(context, listen: false).notifyListeners();
+
     // Prepare step descriptions for Firestore
     List<String> stepDescriptions = _detailedSteps.map((step) {
       return 'Step ${step['stepNumber']}: ${step['inputDigraph']} → ${step['outputDigraph']} [${step['rule']}] - ${step['explanation']}';
@@ -308,6 +314,7 @@ class _PlayfairCipherScreenState extends State<PlayfairCipherScreen>
 
     if (success) {
       _showSnackBar('✅ Added to History & Saved to Cloud!', isSuccess: true);
+      NotificationService().showAddToHistoryNotification();
     } else {
       _showSnackBar('⚠️ Saved locally, but cloud sync failed', isError: true);
     }

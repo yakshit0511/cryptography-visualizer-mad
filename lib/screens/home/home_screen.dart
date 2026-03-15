@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../config/constants.dart';
 import '../../providers/cipher_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -239,17 +242,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: authProvider.profilePhotoPath.isNotEmpty
-                          ? Image.file(
-                              File(authProvider.profilePhotoPath),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.person,
-                                  color: AppColors.white,
-                                  size: 28,
-                                );
-                              },
-                            )
+                          ? (kIsWeb
+                                ? const Icon(
+                                    Icons.person,
+                                    color: AppColors.white,
+                                    size: 28,
+                                  )
+                                : Image.file(
+                                    File(authProvider.profilePhotoPath),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        color: AppColors.white,
+                                        size: 28,
+                                      );
+                                    },
+                                  ))
                           : const Icon(
                               Icons.person,
                               color: AppColors.white,
@@ -427,104 +436,119 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFFE0E0E0)
-                              : Colors.black,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFFE0E0E0)
+                                        : Colors.black,
+                                  ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              description,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    height: 1.4,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFFB0B0B0)
+                                        : Colors.black87,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        description,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          height: 1.4,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFFB0B0B0)
-                              : Colors.black87,
+                      const SizedBox(width: AppSpacing.lg),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [color, color.withOpacity(0.7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        child: Icon(icon, color: Colors.white, size: 28),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: AppSpacing.lg),
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color, color.withOpacity(0.7)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: onTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.open_in_new,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          const Text(
+                            'Open Solver',
+                            style: TextStyle(fontSize: 14, color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 28),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.open_in_new,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    const Text(
-                      'Open Solver',
-                      style: TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -532,8 +556,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.secondaryLight,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: AppColors.secondary.withOpacity(0.3),
           width: 1.5,
@@ -571,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    NotificationService().showInstantNotification();
+                    NotificationService().showEncryptNotification();
                   },
                   child: const Text('Test Instant Notification'),
                 ),

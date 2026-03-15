@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +36,16 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
     // Continue running the app even if Firebase fails
+  }
+
+  // Ensure we have an authenticated user (anonymous fallback)
+  if (FirebaseAuth.instance.currentUser == null) {
+    try {
+      final userCredential = await FirebaseAuth.instance.signInAnonymously();
+      debugPrint('Signed in anonymously: ${userCredential.user?.uid}');
+    } catch (e) {
+      debugPrint('Anonymous sign-in failed: $e');
+    }
   }
 
   // Initialize history service

@@ -6,6 +6,7 @@ import 'dart:io';
 import '../../config/constants.dart';
 import '../../services/user_profile_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -176,6 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         
         _showSnackBar('Profile updated successfully');
+        NotificationService().showUpdateProfileNotification();
       } else {
         _showSnackBar('Failed to update profile', isError: true);
       }

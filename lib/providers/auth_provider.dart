@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/history_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -58,10 +59,13 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = result['user'];
       _isLoggedIn = true;
       _userEmail = email;
-      
+
       final prefs = await SharedPreferences.getInstance();
       _userName = prefs.getString('userName') ?? '';
-      
+
+      // Reload history for the newly logged-in user
+      await HistoryService().loadHistory();
+
       notifyListeners();
     }
 
@@ -87,6 +91,10 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = true;
       _userName = fullName;
       _userEmail = email;
+
+      // Reload history for this user
+      await HistoryService().loadHistory();
+
       notifyListeners();
     }
 
@@ -102,6 +110,10 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = false;
       _userName = '';
       _userEmail = '';
+
+      // Reset history when user logs out
+      await HistoryService().loadHistory();
+
       notifyListeners();
     }
 
