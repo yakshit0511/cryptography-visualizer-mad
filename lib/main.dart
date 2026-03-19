@@ -16,6 +16,7 @@ import 'screens/ciphers/playfair_cipher_screen.dart';
 import 'screens/ciphers/hill_cipher_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/api_data_screen.dart';
 import 'services/history_service.dart';
 import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
@@ -115,17 +116,18 @@ class _MyAppState extends State<MyApp> {
               },
             ),
             routes: {
-              '/login': (context) => const LoginScreen(),
-              '/signup': (context) => const SignupScreen(),
-              '/home': (context) => const HomeScreen(),
-              '/history': (context) => const CipherHistoryScreen(),
-              '/cipher_history': (context) => const CipherHistoryLocalScreen(),
-              '/firestore_history': (context) => const FirestoreHistoryScreen(),
-              '/profile': (context) => const ProfileScreen(),
-              '/settings': (context) => const SettingsScreen(),
-              '/caesar': (context) => const CaesarCipherScreen(),
-              '/playfair': (context) => const PlayfairCipherScreen(),
-              '/hill': (context) => const HillCipherScreen(),
+              '/login': (context) => LoginScreen(),
+              '/signup': (context) => SignupScreen(),
+              '/home': (context) => HomeScreen(),
+              '/history': (context) => CipherHistoryScreen(),
+              '/cipher_history': (context) => CipherHistoryLocalScreen(),
+              '/firestore_history': (context) => FirestoreHistoryScreen(),
+              '/profile': (context) => ProfileScreen(),
+              '/settings': (context) => SettingsScreen(),
+              '/caesar': (context) => CaesarCipherScreen(),
+              '/playfair': (context) => PlayfairCipherScreen(),
+              '/hill': (context) => HillCipherScreen(),
+              '/api_data': (context) => ApiDataScreen(),
             },
           );
         },

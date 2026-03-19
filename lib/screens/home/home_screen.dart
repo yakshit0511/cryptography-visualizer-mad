@@ -611,6 +611,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+          // API Data Button for Practical 9
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/api_data');
+              },
+              icon: const Icon(Icons.api_rounded),
+              label: const Text('API Data Display '),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.info,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              ),
+            ),
+          ),
         ],
       ),
     );
