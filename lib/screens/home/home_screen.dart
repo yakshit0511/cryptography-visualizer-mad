@@ -612,18 +612,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: const Text('Test Instant Notification'),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    NotificationService().scheduleNotification(
-                      const Duration(seconds: 10),
-                    );
-                  },
-                  child: const Text('Schedule 10s Reminder'),
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                NotificationService().scheduleNotification(
+                  const Duration(seconds: 10),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reminder set. You will get notification in 10 seconds.'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text('Schedule 10s Reminder'),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           // API Data Button for Practical 9

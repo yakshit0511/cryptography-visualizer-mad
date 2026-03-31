@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../config/constants.dart';
 import '../../widgets/app_drawer.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,11 +15,38 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _appVersion = 'Loading...';
+  bool _notificationsEnabled = true;
   
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final enabled = await NotificationService().isNotificationsEnabled();
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = enabled;
+    });
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    await NotificationService().setNotificationsEnabled(value);
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = value;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          value ? 'Notifications enabled' : 'Notifications disabled',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
   
   Future<void> _loadAppVersion() async {
@@ -73,10 +101,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               secondary: const Icon(Icons.notifications_outlined, color: AppColors.secondary),
               title: const Text('Notifications'),
               subtitle: const Text('Manage notification preferences'),
-              value: true,
-              onChanged: (value) {
-                // TODO: Implement notification settings
-              },
+              value: _notificationsEnabled,
+              onChanged: _toggleNotifications,
             ),
           ),
           const SizedBox(height: AppSpacing.md),

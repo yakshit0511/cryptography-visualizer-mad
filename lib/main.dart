@@ -8,8 +8,6 @@ import 'config/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/history/cipher_history_screen.dart';
-import 'screens/history/cipher_history_local_screen.dart';
 import 'screens/history/firestore_history_screen.dart';
 import 'screens/ciphers/caesar_cipher_screen.dart';
 import 'screens/ciphers/playfair_cipher_screen.dart';
@@ -119,8 +117,8 @@ class _MyAppState extends State<MyApp> {
               '/login': (context) => LoginScreen(),
               '/signup': (context) => SignupScreen(),
               '/home': (context) => HomeScreen(),
-              '/history': (context) => CipherHistoryScreen(),
-              '/cipher_history': (context) => CipherHistoryLocalScreen(),
+              '/history': (context) => FirestoreHistoryScreen(),
+              '/cipher_history': (context) => FirestoreHistoryScreen(),
               '/firestore_history': (context) => FirestoreHistoryScreen(),
               '/profile': (context) => ProfileScreen(),
               '/settings': (context) => SettingsScreen(),

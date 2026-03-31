@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../config/constants.dart';
 import '../providers/auth_provider.dart';
@@ -36,16 +38,68 @@ class AppDrawer extends StatelessWidget {
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: AppColors.white,
-              child: Text(
-                authProvider.userName.isNotEmpty 
-                    ? authProvider.userName[0].toUpperCase()
-                    : 'U',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
+              child: authProvider.profilePhotoPath.isNotEmpty
+                  ? ClipOval(
+                      child: authProvider.profilePhotoPath.startsWith('http://') ||
+                              authProvider.profilePhotoPath.startsWith('https://')
+                          ? Image.network(
+                              authProvider.profilePhotoPath,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  authProvider.userName.isNotEmpty
+                                      ? authProvider.userName[0].toUpperCase()
+                                      : 'U',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                );
+                              },
+                            )
+                          : (kIsWeb
+                              ? Text(
+                                  authProvider.userName.isNotEmpty
+                                      ? authProvider.userName[0].toUpperCase()
+                                      : 'U',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                )
+                              : Image.file(
+                                  File(authProvider.profilePhotoPath),
+                                  width: 72,
+                                  height: 72,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Text(
+                                      authProvider.userName.isNotEmpty
+                                          ? authProvider.userName[0].toUpperCase()
+                                          : 'U',
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    );
+                                  },
+                                )),
+                    )
+                  : Text(
+                      authProvider.userName.isNotEmpty
+                          ? authProvider.userName[0].toUpperCase()
+                          : 'U',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
             ),
           ),
           
@@ -137,7 +191,7 @@ class AppDrawer extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Center(
               child: Text(
-                'Cryptography Visualizer\nVersion 1.0.0',
+                'Cryptography Visualizer\nVersion 1.1.0',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontSize: 12,

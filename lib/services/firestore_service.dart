@@ -87,10 +87,17 @@ class FirestoreService {
         return false;
       }
 
+      final docRef = _firestore.collection(_collectionName).doc(documentId);
+      final docSnapshot = await docRef.get();
+      if (!docSnapshot.exists || docSnapshot.data()?['userId'] != _userId) {
+        print('❌ Cannot update history: not permitted for current user');
+        return false;
+      }
+
       final data = item.toMap();
       data['userId'] = _userId;
-      
-      await _firestore.collection(_collectionName).doc(documentId).update(data);
+
+      await docRef.update(data);
       print('✅ History item updated');
       return true;
     } catch (e) {
@@ -102,7 +109,19 @@ class FirestoreService {
   /// Delete specific history item
   Future<bool> deleteHistory(String documentId) async {
     try {
-      await _firestore.collection(_collectionName).doc(documentId).delete();
+      if (_userId == null) {
+        print('Error: User not authenticated');
+        return false;
+      }
+
+      final docRef = _firestore.collection(_collectionName).doc(documentId);
+      final docSnapshot = await docRef.get();
+      if (!docSnapshot.exists || docSnapshot.data()?['userId'] != _userId) {
+        print('❌ Cannot delete history: not permitted for current user');
+        return false;
+      }
+
+      await docRef.delete();
       print('✅ History item deleted');
       return true;
     } catch (e) {

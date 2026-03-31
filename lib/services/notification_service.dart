@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Singleton service responsible for initializing and displaying
 /// both local (instant & scheduled) and push notifications.
@@ -13,15 +14,42 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static const String _notificationsEnabledKey = 'notificationsEnabled';
+  static int _scheduleNotificationIdCounter = 1000; // Use high IDs for scheduled notifications
 
   /// Should be assigned from the application so that the service can
   /// perform navigation when the user taps a notification.
   static GlobalKey<NavigatorState>? navigatorKey;
 
+  Future<bool> isNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_notificationsEnabledKey) ?? true;
+  }
+
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notificationsEnabledKey, enabled);
+    if (!enabled) {
+      await _flutterLocalNotificationsPlugin.cancelAll();
+    }
+  }
+
   Future<void> initNotifications() async {
     // initialize timezone database (required for scheduled notifications)
-    tzdata.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(tz.local.name));
+    try {
+      tzdata.initializeTimeZones();
+      final String timezoneName = tz.local.name;
+      debugPrint('📍 Timezone: $timezoneName');
+      tz.setLocalLocation(tz.getLocation(timezoneName));
+      debugPrint('✅ Timezone initialized successfully');
+    } catch (e) {
+      debugPrint('⚠️ Timezone initialization error: $e - Using default timezone');
+      try {
+        tz.setLocalLocation(tz.getLocation('UTC'));
+      } catch (e) {
+        debugPrint('❌ Failed to set timezone to UTC: $e');
+      }
+    }
 
     // create an Android notification channel (required for Oreo+)
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -29,18 +57,32 @@ class NotificationService {
       'Default Notifications', // name
       description: 'General notifications for the Cryptography Visualizer app',
       importance: Importance.high,
+      enableVibration: true,
+      playSound: true,
     );
 
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const DarwinInitializationSettings iOSSettings = 
+        DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+          defaultPresentAlert: true,
+          defaultPresentBadge: true,
+          defaultPresentSound: true,
+        );
 
     final InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
+      iOS: iOSSettings,
     );
 
     await _flutterLocalNotificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
+        debugPrint('🔔 Notification tapped with payload: ${response.payload}');
         _onSelectNotification(response.payload);
       },
     );
@@ -49,6 +91,7 @@ class NotificationService {
     final NotificationAppLaunchDetails? launchDetails =
         await _flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
     if (launchDetails?.didNotificationLaunchApp ?? false) {
+      debugPrint('🚀 App launched from notification tap');
       _onSelectNotification(launchDetails?.notificationResponse?.payload);
     }
 
@@ -58,6 +101,17 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.createNotificationChannel(channel);
+
+    // Request permissions for iOS
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
 
     // note: local notifications do not require an explicit permission request
     //    on Android. iOS permissions are managed by the platform package or
@@ -83,6 +137,8 @@ class NotificationService {
 
   /// Instant local notification used when encryption completes.
   Future<void> showEncryptNotification({String payload = 'history'}) async {
+    if (!await isNotificationsEnabled()) return;
+
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'default_channel',
@@ -105,6 +161,8 @@ class NotificationService {
 
   /// Instant local notification used when decryption completes.
   Future<void> showDecryptNotification({String payload = 'history'}) async {
+    if (!await isNotificationsEnabled()) return;
+
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'default_channel',
@@ -127,6 +185,8 @@ class NotificationService {
 
   /// Instant local notification when adding to history.
   Future<void> showAddToHistoryNotification({String payload = 'history'}) async {
+    if (!await isNotificationsEnabled()) return;
+
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'default_channel',
@@ -149,6 +209,8 @@ class NotificationService {
 
   /// Instant local notification when profile is updated.
   Future<void> showUpdateProfileNotification({String payload = 'profile'}) async {
+    if (!await isNotificationsEnabled()) return;
+
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'default_channel',
@@ -171,24 +233,33 @@ class NotificationService {
 
   /// Schedule a notification after the given [delay].
   Future<void> scheduleNotification(Duration delay, {String payload = 'history'}) async {
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      1,
-      'Reminder',
-      'Check your Cipher History!',
-      tz.TZDateTime.now(tz.local).add(delay),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'default_channel',
-          'Default Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+    if (!await isNotificationsEnabled()) return;
+
+    final int notificationId = _scheduleNotificationIdCounter++;
+    Future.delayed(delay, () async {
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'default_channel',
+        'Default Notifications',
+        channelDescription: 'Reminder notifications',
+        importance: Importance.max,
+        priority: Priority.max,
+        enableVibration: true,
+        playSound: true,
+        visibility: NotificationVisibility.public,
+      );
+
+      const NotificationDetails details = NotificationDetails(
+        android: androidDetails,
+      );
+
+      await _flutterLocalNotificationsPlugin.show(
+        notificationId,
+        'Reminder',
+        'Check your Cipher History!',
+        details,
+        payload: payload,
+      );
+    });
   }
 
   Future<void> _onSelectNotification(String? payload) async {

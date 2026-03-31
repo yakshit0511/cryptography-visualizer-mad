@@ -367,7 +367,7 @@ class _FirestoreHistoryScreenState extends State<FirestoreHistoryScreen>
               child: const Icon(Icons.cloud_queue, size: 20),
             ),
             const SizedBox(width: AppSpacing.md),
-            const Text('Cloud History'),
+            const Text('Ciphers History'),
           ],
         ),
         elevation: 0,
@@ -451,7 +451,7 @@ class _FirestoreHistoryScreenState extends State<FirestoreHistoryScreen>
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            'No Cloud History Yet',
+            'No Ciphers History Yet',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: AppColors.grey,
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/history_service.dart';
@@ -25,6 +26,43 @@ class AuthProvider extends ChangeNotifier {
     _initializeAuth();
   }
 
+  Future<void> _syncProfileFromFirestore() async {
+    try {
+      final uid = _currentUser?.uid;
+      if (uid == null) return;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!doc.exists) return;
+
+      final data = doc.data();
+      if (data == null) return;
+
+      final firestoreName = (data['name'] ?? '').toString();
+      final firestorePhotoUrl = (data['photoUrl'] ?? '').toString();
+
+      if (firestoreName.isNotEmpty) {
+        _userName = firestoreName;
+      }
+      if (firestorePhotoUrl.isNotEmpty) {
+        _profilePhotoPath = firestorePhotoUrl;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', _userName);
+      await prefs.setString('profilePhotoPath', _profilePhotoPath);
+      if (_currentUser?.email != null) {
+        _userEmail = _currentUser!.email!;
+        await prefs.setString('userEmail', _userEmail);
+      }
+    } catch (e) {
+      debugPrint('Error syncing profile from Firestore: $e');
+    }
+  }
+
   /// Initialize authentication state
   Future<void> _initializeAuth() async {
     _isLoading = true;
@@ -37,6 +75,10 @@ class AuthProvider extends ChangeNotifier {
       _userName = prefs.getString('userName') ?? '';
       _userEmail = prefs.getString('userEmail') ?? '';
       _profilePhotoPath = prefs.getString('profilePhotoPath') ?? '';
+
+      if (_currentUser != null) {
+        await _syncProfileFromFirestore();
+      }
     } catch (e) {
       debugPrint('Error initializing auth: $e');
     }
@@ -62,6 +104,8 @@ class AuthProvider extends ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
       _userName = prefs.getString('userName') ?? '';
+
+      await _syncProfileFromFirestore();
 
       // Reload history for the newly logged-in user
       await HistoryService().loadHistory();
@@ -92,6 +136,8 @@ class AuthProvider extends ChangeNotifier {
       _userName = fullName;
       _userEmail = email;
 
+      await _syncProfileFromFirestore();
+
       // Reload history for this user
       await HistoryService().loadHistory();
 
@@ -110,6 +156,7 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = false;
       _userName = '';
       _userEmail = '';
+      _profilePhotoPath = '';
 
       // Reset history when user logs out
       await HistoryService().loadHistory();
@@ -129,6 +176,11 @@ class AuthProvider extends ChangeNotifier {
       _profilePhotoPath = prefs.getString('profilePhotoPath') ?? '';
       _currentUser = _authService.currentUser;
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+      if (_currentUser != null) {
+        await _syncProfileFromFirestore();
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error refreshing user data: $e');
