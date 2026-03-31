@@ -258,9 +258,18 @@ class AppText {
   // Caption
   static const TextStyle caption = TextStyle(
     fontSize: 12,
+
     fontWeight: FontWeight.w400,
     color: AppColors.grey,
   );
+}
+
+/// Cloudinary configuration for profile photo uploads.
+/// Replace these placeholders with your Cloudinary values.
+class AppCloudinary {
+  static const String cloudName = 'dclc4tor2';
+  static const String uploadPreset = 'Cryptography';
+  static const String profileFolder = 'profile_images';
 }
 
 /// App Shadows

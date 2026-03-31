@@ -22,14 +22,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   
   String? _selectedGender;
   String? _profilePhotoPath;
+  String? _photoUrl; // Firebase Storage URL
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false; // Loading state for photo upload
   
   final UserProfileService _profileService = UserProfileService();
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final ImagePicker _imagePicker = ImagePicker();
   
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
+
+  bool _isNetworkUrl(String? value) {
+    if (value == null || value.isEmpty) return false;
+    return value.startsWith('http://') || value.startsWith('https://');
+  }
 
   @override
   void initState() {
@@ -57,7 +64,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Load profile photo from AuthProvider
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      _profilePhotoPath = authProvider.profilePhotoPath;
+      final storedPhoto = authProvider.profilePhotoPath;
+      if (_isNetworkUrl(storedPhoto)) {
+        _photoUrl = storedPhoto;
+        _profilePhotoPath = null;
+      } else {
+        _profilePhotoPath = storedPhoto;
+      }
 
       final profileData = await _profileService.getUserProfile(uid);
       
@@ -66,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _nameController.text = profileData['name'] ?? '';
           _phoneController.text = profileData['phone'] ?? '';
           _selectedGender = profileData['gender'];
+          _photoUrl = profileData['photoUrl']; // Load photo URL from Firestore
         });
       }
     } catch (e) {
@@ -96,6 +110,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       print('Error picking image: $e');
       _showSnackBar('Error selecting photo', isError: true);
+    }
+  }
+
+  /// Upload profile photo to Cloudinary
+  Future<void> _uploadProfilePhotoToFirebase() async {
+    setState(() => _isUploadingPhoto = true);
+    
+    try {
+      // Call UserProfileService to upload image
+      final photoUrl = await _profileService.uploadProfileImage();
+      
+      if (photoUrl != null && mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.updateProfilePhoto(photoUrl);
+        setState(() {
+          _photoUrl = photoUrl; // Update with Cloudinary URL
+          _profilePhotoPath = null; // Clear local path
+        });
+        _showSnackBar('Profile photo uploaded successfully');
+      } else {
+        _showSnackBar('Photo upload cancelled or failed', isError: true);
+      }
+    } catch (e) {
+      print('Error uploading photo: $e');
+      _showSnackBar('Error uploading photo', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingPhoto = false);
+      }
     }
   }
 
@@ -172,7 +215,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         await authProvider.updateUserName(enteredName);
         
-        if (_profilePhotoPath != null && _profilePhotoPath!.isNotEmpty) {
+        if (_profilePhotoPath != null &&
+            _profilePhotoPath!.isNotEmpty &&
+            !_isNetworkUrl(_profilePhotoPath)) {
           await authProvider.updateProfilePhoto(_profilePhotoPath!);
         }
         
@@ -238,9 +283,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const SizedBox(height: 20),
                     
-                    // Profile Avatar with Photo Picker
+                    // Profile Avatar with Photo Upload (Firebase Storage)
                     GestureDetector(
-                      onTap: _pickProfilePhoto,
+                      onTap: _isUploadingPhoto ? null : _uploadProfilePhotoToFirebase,
                       child: Stack(
                         children: [
                           CircleAvatar(
@@ -249,10 +294,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: CircleAvatar(
                               radius: 57,
                               backgroundColor: isDark ? const Color(0xFF2C2C2C) : AppColors.white,
-                              backgroundImage: _profilePhotoPath != null && _profilePhotoPath!.isNotEmpty
-                                  ? FileImage(File(_profilePhotoPath!))
-                                  : null,
-                              child: _profilePhotoPath == null || _profilePhotoPath!.isEmpty
+                              backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                                  ? NetworkImage(_photoUrl!)
+                                  : (_profilePhotoPath != null && _profilePhotoPath!.isNotEmpty
+                                      ? FileImage(File(_profilePhotoPath!))
+                                      : null),
+                              child: (_photoUrl == null || _photoUrl!.isEmpty) && 
+                                     (_profilePhotoPath == null || _profilePhotoPath!.isEmpty)
                                   ? Icon(
                                       Icons.person,
                                       size: 70,
@@ -261,26 +309,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   : null,
                             ),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF2C2C2C) : AppColors.white,
-                                  width: 3,
+                          // Loading overlay when uploading
+                          if (_isUploadingPhoto)
+                            Positioned.fill(
+                              child: CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.black.withOpacity(0.3),
+                                child: const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                size: 20,
-                                color: AppColors.white,
+                            ),
+                          // Camera badge (hidden while uploading)
+                          if (!_isUploadingPhoto)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF2C2C2C) : AppColors.white,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 20,
+                                  color: AppColors.white,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

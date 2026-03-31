@@ -242,14 +242,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: authProvider.profilePhotoPath.isNotEmpty
-                          ? (kIsWeb
-                                ? const Icon(
-                                    Icons.person,
-                                    color: AppColors.white,
-                                    size: 28,
-                                  )
-                                : Image.file(
-                                    File(authProvider.profilePhotoPath),
+                          ? (authProvider.profilePhotoPath.startsWith('http://') ||
+                                    authProvider.profilePhotoPath.startsWith('https://')
+                                ? Image.network(
+                                    authProvider.profilePhotoPath,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return const Icon(
@@ -258,7 +254,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                         size: 28,
                                       );
                                     },
-                                  ))
+                                  )
+                                : (kIsWeb
+                                      ? const Icon(
+                                          Icons.person,
+                                          color: AppColors.white,
+                                          size: 28,
+                                        )
+                                      : Image.file(
+                                          File(authProvider.profilePhotoPath),
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return const Icon(
+                                                  Icons.person,
+                                                  color: AppColors.white,
+                                                  size: 28,
+                                                );
+                                              },
+                                        )))
                           : const Icon(
                               Icons.person,
                               color: AppColors.white,

@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import '../config/constants.dart';
 
 /// Service for managing user profiles in Firestore
 class UserProfileService {
@@ -125,6 +130,86 @@ class UserProfileService {
     } catch (e) {
       print('❌ Error deleting user profile: $e');
       return false;
+    }
+  }
+
+  /// Upload profile image (Display Picture) from gallery
+  /// Uploads to Cloudinary and stores URL in Firestore
+  /// Returns download URL if successful, null if failed
+  Future<String?> uploadProfileImage() async {
+    try {
+      // Get current user ID
+      final uid = currentUserId;
+      if (uid == null) {
+        print('❌ Error: No user logged in');
+        return null;
+      }
+
+      // Pick image from gallery
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (pickedFile == null) {
+        print('⚠️ Image selection cancelled by user');
+        return null;
+      }
+
+      print('📸 Image selected: ${pickedFile.name}');
+
+      if (AppCloudinary.cloudName == 'YOUR_CLOUD_NAME' ||
+          AppCloudinary.uploadPreset == 'YOUR_UNSIGNED_UPLOAD_PRESET') {
+        print('❌ Cloudinary config missing. Update AppCloudinary constants.');
+        return null;
+      }
+
+      final uri = Uri.parse(
+        'https://api.cloudinary.com/v1_1/${AppCloudinary.cloudName}/image/upload',
+      );
+
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = AppCloudinary.uploadPreset
+        ..fields['folder'] = AppCloudinary.profileFolder
+        ..fields['public_id'] = uid;
+
+      request.files.add(await http.MultipartFile.fromPath('file', pickedFile.path));
+
+      print('📤 Uploading image to Cloudinary...');
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        print('❌ Cloudinary upload failed (${response.statusCode}): $responseBody');
+        return null;
+      }
+
+      final jsonResponse = jsonDecode(responseBody) as Map<String, dynamic>;
+      final photoUrl = jsonResponse['secure_url'] as String?;
+      if (photoUrl == null || photoUrl.isEmpty) {
+        print('❌ Cloudinary response missing secure_url');
+        return null;
+      }
+
+      print('🔗 Download URL: $photoUrl');
+
+      // Save photoUrl to Firestore
+      await _firestore
+          .collection(_collectionName)
+          .doc(uid)
+          .update({'photoUrl': photoUrl});
+
+      print('✅ Profile image URL saved to Firestore');
+      return photoUrl;
+    } on FirebaseException catch (e) {
+      print('❌ Firebase error [${e.code}]: ${e.message}');
+      return null;
+    } catch (e) {
+      print('❌ Error uploading profile image: $e');
+      return null;
     }
   }
 }
