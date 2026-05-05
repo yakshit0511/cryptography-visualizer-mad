@@ -131,7 +131,9 @@ class NotificationService {
     // when a message is opened/tapped
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('FCM message opened');
-      handleNotificationClick();
+      handleNotificationClick(
+        message.data['route'] ?? message.data['payload'] ?? 'history',
+      );
     });
   }
 
@@ -264,12 +266,8 @@ class NotificationService {
 
   Future<void> _onSelectNotification(String? payload) async {
     // called when a local notification is tapped
-    String route = '/history'; // default
-    if (payload == 'profile') {
-      route = '/profile';
-    } else if (payload == 'home') {
-      route = '/home';
-    }
+    final route = _routeForPayload(payload);
+
     // Navigate to the appropriate screen
     if (navigatorKey?.currentState != null) {
       navigatorKey!.currentState!.pushNamed(route);
@@ -277,11 +275,25 @@ class NotificationService {
   }
 
   /// Shared handler for any notification click (instant, scheduled, or push).
-  void handleNotificationClick() {
+  void handleNotificationClick([String? payload]) {
     if (navigatorKey == null) {
-      debugPrint('Navigator key not set, cannot open history screen');
+      debugPrint('Navigator key not set, cannot open notification target');
       return;
     }
-    navigatorKey?.currentState?.pushNamed('/history');
+    navigatorKey?.currentState?.pushNamed(_routeForPayload(payload));
+  }
+
+  String _routeForPayload(String? payload) {
+    switch (payload) {
+      case 'profile':
+        return '/profile';
+      case 'home':
+        return '/home';
+      case 'settings':
+        return '/settings';
+      case 'history':
+      default:
+        return '/history';
+    }
   }
 }
